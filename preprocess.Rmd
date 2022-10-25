@@ -1,0 +1,58 @@
+---
+title: "preprocess"
+author: "Kyra Hendrickson"
+date: "2022-10-24"
+output: html_document
+---
+This file pre-processes our data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Stage I: Preprocess
+
+1. Download movies data (10/24 version latest movie is Black Adam):
+```{r}
+originaldata <- read.csv("C:\\Users\\Kyra\\OneDrive\\Documents\\CS5232project\\movies.csv")
+```
+
+2. Drop irrelevant columns
+```{r}
+df = subset(originaldata, select = -c(id, overview, tagline, keywords, poster_path, backdrop_path, recommendations) )
+```
+
+3. Get rid of movies that haven't been released according to Status column. For example: "In Production" movies (https://www.programmingr.com/count-occurrences-in-column/)
+```{r}
+table(df$status)
+```
+
+4. Impute NAs with MICE package
+```{r}
+
+```
+
+5. Shuffle df by rows (follow https://www.geeksforgeeks.org/how-to-shuffle-a-dataframe-in-r-by-rows/) save as "df"
+```{r}
+
+```
+
+6. Subset 10% of data, call it "testSet" and save as a csv file, also save the other 90% of shuffled data in a separate file and call it "trainingSet"
+
+** for SVM we can use the trainingSet to train with k-fold and go an extra step and do k-fold with testSet for the final model if we like (or just use only trainingSet)
+```{r}
+
+```
+
+Stage II: Linear Regression in a separate file predicting revenue
+
+Task 1: Decide what a successful revenue is
+For example:
+ <1 mil = not successful
+1 mil<revenue<10 = moderately successful
+10 mil> = very successful
+
+Task 2: build model
+
+Stage III:
+Implementing SVM alg (https://www.youtube.com/watch?v=RKZoJVMr6CU demo starts at 13:39) and the other algs in seperate files
+
