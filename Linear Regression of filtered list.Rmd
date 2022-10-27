@@ -1,0 +1,93 @@
+---
+title: "Linear Regression - Movie Project"
+author: "Chase Pheifer"
+date: '`r Sys.Date()`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(readr)
+library(knitr)
+library(kableExtra)
+library(caret)
+library(klaR)
+
+```
+
+```{r read file in}
+
+movies_filtered <- read_csv('movies_filtered2.csv', col_names =c('title','genres','original_language','production_companies','budget','revenue','runtime','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)
+
+```
+
+```{r shuffle and partition data into training and test sets}
+#references:
+#https://www.geeksforgeeks.org/how-to-shuffle-a-dataframe-in-r-by-rows/
+#https://stackoverflow.com/questions/51039546/r-caret-package-data-partition-into-training-test-sets-before-traincontrol
+
+set.seed(500)
+
+movies_shuffled <- movies_filtered[sample(1:nrow(movies_filtered)), ]
+
+trainIndex <- createDataPartition(movies_shuffled$revenue, p=0.8, list=FALSE) #80/20 split
+movie_train <- movies_shuffled[trainIndex,]
+movie_test <- movies_shuffled[-trainIndex,]
+
+```
+
+
+```{r linear regression model}
+# references:
+# https://www.statology.org/lm-function-in-r/
+
+# linear_model <- lm(revenue ~ 1 + budget, data = movie_train)
+
+# linear_model <- lm(revenue ~ 1 + budget + I(budget^2), data = movie_train)
+# 
+# linear_model <- lm(revenue ~ 1+budget+I(budget^2)+I(budget^3), data = movie_train)
+# 
+# linear_model <- lm(revenue ~ 1+budget+I(budget^2)+I(budget^3)+I(budget^4), data = movie_train)
+# 
+# linear_model <- lm(revenue ~ 1+budget+I(budget^2)+I(budget^3)+I(budget^4)+I(budget^5), data = movie_train)
+
+linear_model <- lm(revenue ~ budget + runtime, data = movie_train)
+```
+
+```{r model evaluation}
+
+summary(linear_model)
+plot(linear_model)
+
+```
+
+```{r plot model vs. original data}
+
+plot(movie_train$budget, movie_train$revenue, col='red', xlab='Movie Budget',ylab='Movie Revenue')
+
+abline(linear_model)
+
+```
+
+```{r use model to predict values}
+
+new_budgets <- expand.grid(budget=c(5*10^3,5*10^4,5*10^5,5*10^6,5*10^7,5*10^8),runtime=c(10,500))
+
+new_budgets
+
+data.frame(predict(linear_model, newdata = new_budgets))
+
+```
+
+```{r Grid Search CV}
+#references:
+#https://www.r-bloggers.com/2020/04/grid-search-cross-validation-using-crossval/
+
+# possibly follow the above references to determine ideal linear model
+
+
+```
+
+
