@@ -1,0 +1,125 @@
+---
+title: "adjustforinflation"
+author: "Kyra Hendrickson"
+date: "2022-11-4"
+output: html_document
+---
+This file has contains a  for loop that takes:
+a vector of $prices, a vector of years those prices were from and outputs a vector of adjusted $prices for inflation 
+for a specified country and date. 
+ * For loop on line 76. 
+ *There's an example of how to use it on line 41.
+ * Line 97: Using this loop for budget and revenue on movies_filtered, don't have a vector of years yet though.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Imports
+```{r}
+library(tidyverse)
+library(readr)
+library(knitr)
+library(kableExtra)
+library(caret)
+library(klaR)
+```
+
+```{r}
+require("quantmod");require("PerformanceAnalytics");require("Quandl")
+```
+
+Download data
+```{r}
+movies_filtered <- read_csv('movies_filtered2.csv', col_names =c('title','genres','original_language','production_companies','budget','revenue','runtime','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)
+```
+
+
+    print row 62 below. Using 61 in argument because the code counts the header as the first row.
+```{r}
+movies_filtered[1:10,]
+```
+
+===================================================================================================================
+example from https://app.datacamp.com/workspace/preview?_tag=rdocs&rdocsPath=packages%2FpriceR%2Fversions%2F0.1.6%2Ftopics%2Fadjust_for_inflation&utm_source=r-docs&utm_medium=docs&utm_term=adjust_for_inflation&utm_content=run_example_in_workspace
+
+```{r}
+if(!require('PriceR')){
+  install.packages('priceR')
+  library('priceR')
+}
+```
+from australia, convert $100 from 2005 into 2017 dollars
+```{r}
+country <- "AU"
+inflation_dataframe <- retrieve_inflation_data(country)
+countries_dataframe <- show_countries() 
+```
+```{r}
+adjust_for_inflation(100, 2005, country, to_date = 2017,
+inflation_dataframe = inflation_dataframe,
+countries_dataframe = countries_dataframe)
+
+adjust_for_inflation(200, 2005, country, to_date = 2017,
+inflation_dataframe = inflation_dataframe,
+countries_dataframe = countries_dataframe)
+
+adjust_for_inflation(300, 2005, country, to_date = 2017,
+inflation_dataframe = inflation_dataframe,
+countries_dataframe = countries_dataframe)
+
+```
+
+```{r}
+vectorofprices <- c(100,200,300)
+fromdates <- c(2005,2005,2005)
+todates <- c(2017,2017,2017)
+```
+
+```{r}
+# # run a for loop that outputs a vector of adjusted prices
+adjusted_prices <- vector(mode="numeric")
+for (i in 1:length(vectorofprices)){
+  new_prices <- adjust_for_inflation(vectorofprices[i], fromdates[i], country, todates[i],
+    inflation_dataframe = inflation_dataframe,
+    countries_dataframe = countries_dataframe)
+  adjusted_prices <- append(adjusted_prices, new_prices)
+}
+```
+
+```{r}
+print(adjusted_prices)
+```
+
+============================================================================
+back to movies_filtered data
+
+```{r}
+# set country
+country <- "US"
+inflation_dataframe <- retrieve_inflation_data(country)
+countries_dataframe <- show_countries() 
+
+# get budget and revenue vector 
+budgets <- movies_filtered[5]
+revenue <- movies_filtered[6]
+to_date = 2022
+
+# commented out down here is how to adjust budget for inflation, just switch budget to revenue for revenue adjustment"
+
+"
+from_dates <- movies_filtered[NA atm]
+adjusted_prices <- vector(mode="numeric")
+for (i in 1:length(budgets)){
+  new_prices <- adjust_for_inflation(budgets[i], from_dates[i], country, to_date,
+    inflation_dataframe = inflation_dataframe,
+    countries_dataframe = countries_dataframe)
+  adjusted_prices <- append(adjusted_prices, new_prices)
+}"
+```
+
+
+```{r}
+
+```
+
