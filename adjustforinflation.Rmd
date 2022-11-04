@@ -4,12 +4,13 @@ author: "Kyra Hendrickson"
 date: "2022-11-4"
 output: html_document
 ---
-This file has contains a  for loop that takes:
-a vector of $prices, a vector of years those prices were from and outputs a vector of adjusted $prices for inflation 
+This file has contains a  for loop that:
+inputs 1.) a vector of dollar prices, 2.) a vector of years those prices were from and outputs a vector of adjusted prices for inflation 
 for a specified country and date. 
- * For loop on line 76. 
- *There's an example of how to use it on line 41.
- * Line 97: Using this loop for budget and revenue on movies_filtered, don't have a vector of years yet though.
+
+ * For loop on line 75. 
+ *There's an example of how to use it on line 40.
+ * Line 93: Using this loop for budget and revenue on movies_filtered, don't have a vector of years yet though.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -31,16 +32,11 @@ require("quantmod");require("PerformanceAnalytics");require("Quandl")
 
 Download data
 ```{r}
-movies_filtered <- read_csv('movies_filtered2.csv', col_names =c('title','genres','original_language','production_companies','budget','revenue','runtime','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)
+movie_test <- read_csv('movie_test.csv', col_names =c('title','genres','original_language','production_companies','budget','revenue','runtime','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)
 ```
 
 
-    print row 62 below. Using 61 in argument because the code counts the header as the first row.
-```{r}
-movies_filtered[1:10,]
-```
-
-===================================================================================================================
+============================================================
 example from https://app.datacamp.com/workspace/preview?_tag=rdocs&rdocsPath=packages%2FpriceR%2Fversions%2F0.1.6%2Ftopics%2Fadjust_for_inflation&utm_source=r-docs&utm_medium=docs&utm_term=adjust_for_inflation&utm_content=run_example_in_workspace
 
 ```{r}
@@ -101,8 +97,8 @@ inflation_dataframe <- retrieve_inflation_data(country)
 countries_dataframe <- show_countries() 
 
 # get budget and revenue vector 
-budgets <- movies_filtered[5]
-revenue <- movies_filtered[6]
+budgets <- movie_test[5]
+revenue <- movie_test[6]
 to_date = 2022
 
 # commented out down here is how to adjust budget for inflation, just switch budget to revenue for revenue adjustment"
@@ -119,7 +115,4 @@ for (i in 1:length(budgets)){
 ```
 
 
-```{r}
-
-```
 
