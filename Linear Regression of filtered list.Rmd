@@ -14,80 +14,129 @@ library(knitr)
 library(kableExtra)
 library(caret)
 library(klaR)
+library(dplyr)
 
 ```
 
 ```{r read file in}
+#references:
+# https://stackoverflow.com/questions/24159761/r-read-csv-with-row-and-column-name
 
-movies_filtered <- read_csv('movies_filtered2.csv', col_names =c('title','genres','original_language','production_companies','budget','revenue','runtime','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)
-
+movie_train <- read.csv('movie_train.csv', header = TRUE)
 ```
 
-```{r shuffle and partition data into training and test sets}
+```{r k-fold}
 #references:
-#https://www.geeksforgeeks.org/how-to-shuffle-a-dataframe-in-r-by-rows/
-#https://stackoverflow.com/questions/51039546/r-caret-package-data-partition-into-training-test-sets-before-traincontrol
+# https://www.statology.org/k-fold-cross-validation-in-r/
+# https://www.statology.org/lm-function-in-r/
 
 set.seed(500)
 
-movies_shuffled <- movies_filtered[sample(1:nrow(movies_filtered)), ]
+# running k-fold cross validation for the linear model with different combinations of continuous predictors
+# with k = 5
+ctrl <- trainControl(method = "cv", number = 5)
 
-trainIndex <- createDataPartition(movies_shuffled$revenue, p=0.8, list=FALSE) #80/20 split
-movie_train <- movies_shuffled[trainIndex,]
-movie_test <- movies_shuffled[-trainIndex,]
+# for net revenue as response
+model_nr_br <- train((revenue - budget) ~ budget + runtime, data = movie_train, method = 'lm', trControl = ctrl) # budget and runtime as predictor
+model_nr_b <- train((revenue - budget) ~ budget, data = movie_train, method = 'lm', trControl = ctrl) # budget as predictor
+model_nr_r <- train((revenue - budget) ~ runtime, data = movie_train, method = 'lm', trControl = ctrl) # runtime as predictor
 
+print(model_nr_br)
+print(model_nr_b)
+print(model_nr_r)
+
+lm_nr_br <- lm((revenue - budget) ~ budget + runtime, data = movie_train) # create linear model
+lm_nr_b <- lm((revenue - budget) ~ budget, data = movie_train)
+lm_nr_r <- lm((revenue - budget) ~ runtime, data = movie_train)
 ```
 
+```{r k-fold2}
+set.seed(500)
 
-```{r linear regression model}
-# references:
-# https://www.statology.org/lm-function-in-r/
+# for ratio of revenue to budget as response
+model_pr_br <- train((revenue / budget) ~ budget + runtime, data = movie_train, method = 'lm', trControl = ctrl) # budget and runtime as predictor
+model_pr_b <- train((revenue / budget) ~ budget, data = movie_train, method = 'lm', trControl = ctrl) # budget as predictor
+model_pr_r <- train((revenue / budget) ~ runtime, data = movie_train, method = 'lm', trControl = ctrl) # runtime as predictor
 
-# linear_model <- lm(revenue ~ 1 + budget, data = movie_train)
+print(model_pr_br)
+print(model_pr_b)
+print(model_pr_r)
 
-# linear_model <- lm(revenue ~ 1 + budget + I(budget^2), data = movie_train)
-# 
-# linear_model <- lm(revenue ~ 1+budget+I(budget^2)+I(budget^3), data = movie_train)
-# 
-# linear_model <- lm(revenue ~ 1+budget+I(budget^2)+I(budget^3)+I(budget^4), data = movie_train)
-# 
-# linear_model <- lm(revenue ~ 1+budget+I(budget^2)+I(budget^3)+I(budget^4)+I(budget^5), data = movie_train)
+lm_pr_br <- lm((revenue / budget) ~ budget + runtime, data = movie_train) # create linear model
+lm_pr_b <- lm((revenue / budget) ~ budget, data = movie_train)
+lm_pr_r <- lm((revenue / budget) ~ runtime, data = movie_train)
+```
 
-linear_model <- lm(revenue ~ budget + runtime, data = movie_train)
+```{r k-fold3}
+set.seed(500)
+
+# for vote count as response
+model_vc_br <- train(vote_count ~ budget + runtime, data = movie_train, method = 'lm', trControl = ctrl) # budget and runtime as predictor
+model_vc_b <- train(vote_count ~ budget, data = movie_train, method = 'lm', trControl = ctrl) # budget as predictor
+model_vc_r <- train(vote_count ~ runtime, data = movie_train, method = 'lm', trControl = ctrl) # runtime as predictor
+
+print(model_vc_br)
+print(model_vc_b)
+print(model_vc_r)
+
+lm_vc_br <- lm(vote_count ~ budget + runtime, data = movie_train) # create linear model
+lm_vc_b <- lm((vote_count - budget) ~ budget, data = movie_train)
+lm_vc_r <- lm(vote_count - budget ~ runtime, data = movie_train)
+```
+
+```{r k-fold4}
+set.seed(500)
+
+# for vote average as response
+model_va_br <- train(vote_average ~ budget + runtime, data = movie_train, method = 'lm', trControl = ctrl) # budget and runtime as predictor
+model_va_b <- train(vote_average ~ budget, data = movie_train, method = 'lm', trControl = ctrl) # budget as predictor
+model_va_r <- train(vote_average ~ runtime, data = movie_train, method = 'lm', trControl = ctrl) # runtime as predictor
+
+print(model_va_br)
+print(model_va_b)
+print(model_va_r)
+
+lm_va_br <- lm(vote_average ~ budget + runtime, data = movie_train) # create linear model
+lm_va_b <- lm(vote_average ~ budget, data = movie_train)
+lm_va_r <- lm(vote_average ~ runtime, data = movie_train)
 ```
 
 ```{r model evaluation}
-
-summary(linear_model)
-plot(linear_model)
-
+# summary(linear_model)
+# plot(linear_model)
 ```
 
 ```{r plot model vs. original data}
+plot(movie_train$runtime, (movie_train$revenue - movie_train$budget), col='red', xlab='Movie Runtime',ylab='Net Movie Revenue')
+abline(lm_nr_br)
+```
 
-plot(movie_train$budget, movie_train$revenue, col='red', xlab='Movie Budget',ylab='Movie Revenue')
+```{r plot model vs. original data}
+plot(movie_train$budget, (movie_train$revenue - movie_train$budget), col='red', xlab='Movie Budget',ylab='Net Movie Revenue')
+abline(lm_nr_br)
+```
 
-abline(linear_model)
 
+```{r plot model vs. original data}
+plot(movie_train$budget, (movie_train$revenue / movie_train$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
+abline(lm_pr_b)
+```
+```{r plot model vs. original data}
+# references
+# https://www.geeksforgeeks.org/set-axis-limits-of-plot-in-r/
+plot(movie_train$budget, (movie_train$revenue / movie_train$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget', ylim = c(0,10000))
+abline(lm_pr_b)
 ```
 
 ```{r use model to predict values}
-
-new_budgets <- expand.grid(budget=c(5*10^3,5*10^4,5*10^5,5*10^6,5*10^7,5*10^8),runtime=c(10,500))
-
-new_budgets
-
-data.frame(predict(linear_model, newdata = new_budgets))
-
+# new_budgets <- expand.grid(budget=c(5*10^3,5*10^4,5*10^5,5*10^6,5*10^7,5*10^8),runtime=c(10,500))
+# data.frame(predict(linear_model, newdata = new_budgets))
 ```
 
 ```{r Grid Search CV}
 #references:
 #https://www.r-bloggers.com/2020/04/grid-search-cross-validation-using-crossval/
 
-# possibly follow the above references to determine ideal linear model
-
+# possibly follow the above references to determine ideal polynomial model
 
 ```
-
-
