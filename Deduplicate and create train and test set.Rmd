@@ -23,7 +23,7 @@ library(dplyr)
 # https://www.geeksforgeeks.org/how-to-remove-duplicate-rows-in-r-dataframe/
 # https://datatofish.com/export-dataframe-to-csv-in-r/
 
-movies_filtered <- distinct(read_csv('movies_filtered_duprows.csv', col_names =c('title','genres','original_language','production_companies','budget','revenue','runtime','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)) 
+movies_filtered <- distinct(read_csv('movies_filtered_duprows.csv', col_names =c('title','genres','original_language','production_companies','release_date','budget','revenue','runtime','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)) 
 
 # distinct() removes duplicate rows
 
