@@ -4,11 +4,19 @@ author: "Kyra Hendrickson"
 date: "2022-11-4"
 output: html_document
 ---
-This file has contains a  for loop that:
 
-inputs 1.) a vector of dollar prices, 2.) a vector of years those prices were from and outputs a vector of adjusted prices for inflation 
-for a specified country and date. 
 
+---
+notes
+
+This file calculates an adjusted budget and revenue for inflation column (starts on line 73)
+and outputs movies_filtered.csv with the updated budget and revenue (updated for yrs<2021).
+
+Did a sanity check on routine and the numbers looks reasonable. Also ran the routine for 
+some 2021 movies and they all gave the same values which checks out. 
+
+Assumed budget and revenue were in USD in our dataframe
+---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
