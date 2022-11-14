@@ -1,0 +1,150 @@
+---
+title: "svm_example"
+author: "Kyra Hendrickson"
+date: "2022-11-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Imports
+```{r}
+library(tidyverse)
+library(readr)
+library(knitr)
+library(kableExtra)
+library(caret)
+library(klaR)
+```
+
+
+Copy and pasted from https://rpubs.com/empireisme/linearsvm
+
+--
+Part 1: Get example data, not part of svm alg
+--
+
+Goal is to makea hyperplane that can seperate two labels
+In this case we have two features: x1 and x2 and two labels: y=1 and y=-1 
+```{r}
+set.seed(2) # makes this reproducible
+n = 5
+a1 = rnorm(n) # vector of 5 numbers picked from normal distribution
+a2 = 1 - a1 + 2* runif(n) # runif generates uniform random numbers
+b1 = rnorm(n)
+b2 = -1 - b1 - 2*runif(n)
+```
+
+```{r}
+x = rbind(matrix(cbind(a1,a2),,2),matrix(cbind(b1,b2),,2))
+y <- matrix(c(rep(1,n),rep(-1,n)))
+plot(x,col=ifelse(y>0,4,2),pch=".",cex=7,xlab = "feature 1",ylab = "feature 2")
+```
+blue is +1
+red is -1
+
+```{r}
+df <-cbind(x,y)
+colnames(df) <- c("feature 1","feature 2", "y(label)")
+
+df
+```
+
+--
+Part 2: SVM algorithm
+--
+
+  --
+  gradient descent routine, this is essentially a lagrange mult. problem
+  --
+```{r}
+set.seed(2)
+X<- cbind(1,x) #make design matrix
+n <- nrow(X)  #number of sample
+p <- ncol(X) #number of feature+1 (bias)
+w_intial <- rnorm(p,-2,1)
+w <- w_intial
+eta <- 0.1
+R <- 7 #number of iteration
+W <- matrix(w_intial ,nrow = R+1,ncol = p,byrow = T) #matrix put intial guess and the procedure to do gradient descent 
+W
+```
+
+```{r}
+# %*% is matrix multiplication
+X%*%w_intial
+```
+
+  --
+  indicator function (returns 1 if value is >0, 0 if < 0)
+  --
+```{r}
+indicator<-function(condition) ifelse(condition,1,0)
+# example
+a <- 3
+indicator( a<1 )
+```
+```{r}
+(a<4)*1
+```
+  --
+  part of gradient descent
+  --
+```{r}
+X%*%w
+```
+  
+  --
+  svm function
+  --
+```{r}
+svm_gradient<- function(x,eta=0.001,R=10000){
+X<- cbind(1,x)#make design matrix
+n <- nrow(X)  #number of samples
+p <- ncol(X) #number of feature+1 (bias)
+
+w_intial <- rep(0,p)
+W <- matrix(w_intial ,nrow = R+1,ncol = p,byrow = T) #matrix put initial guess and the procedure to do gradient descent
+for(i in 1:R){
+  for(j in 1:p)
+  {
+    W[i+1,j]<- W[i,j]+eta*sum(((y*(X%*%W[i,]))<1)*1 * y * X[,j] )  
+  }
+  }
+return(W)  
+}
+getsvm <- function(x){
+w_answer<- svm_gradient(x)[nrow(svm_gradient(x)),]
+return(w_answer )
+}
+```
+
+  --
+  test out the function
+  --
+```{r}
+set.seed(2)
+n = 5
+a1 = rnorm(n)
+a2 = 1 - a1 + 2* runif(n)
+b1 = rnorm(n)
+b2 = -1 - b1 - 2*runif(n)
+x = rbind(matrix(cbind(a1,a2),,2),matrix(cbind(b1,b2),,2))
+y <- matrix(c(rep(1,n),rep(-1,n)))
+plot(x,col=ifelse(y>0,4,2),pch=".",cex=7,xlab = "x1",ylab = "x2")
+w_answer<- getsvm(x) # your hyperplane inf
+abline(-w_answer[1]/w_answer[3],-w_answer[2]/w_answer[3])
+abline((1-w_answer[1])/w_answer[3],-w_answer[2]/w_answer[3],lty=2)
+abline((-1-w_answer[1])/w_answer[3],-w_answer[2]/w_answer[3],lty=2)
+```
+
+```{r}
+w_answer<- getsvm(x)
+abline(-w_answer[1]/w_answer[3],-w_answer[2]/w_answer[3])
+abline((1-w_answer[1])/w_answer[3],-w_answer[2]/w_answer[3],lty=2)
+abline((-1-w_answer[1])/w_answer[3],-w_answer[2]/w_answer[3],lty=2)
+```
+
+  
