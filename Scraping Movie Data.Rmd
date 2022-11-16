@@ -1,0 +1,131 @@
+---
+title: "Scrapping Movie Data"
+author: "Brian"
+date: "2022-11-07"
+output: html_document
+---
+
+### Installed libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(rvest)
+library(httr)
+library(dplyr)
+library(readr)
+library(knitr)
+library(caret)
+library(tidyverse)
+library(ggplot2)
+```
+
+
+### Retrieves the *Budget* for the movie **Black Adam**
+```{r}
+url <- read_html("https://www.imdb.com/title/tt6443346/?ref_=hm_fanfav_tt_t_1_pd_fp1")
+#Gets list of data for the movie
+url %>%
+html_nodes("span.ipc-metadata-list-item__list-content-item") %>%
+  html_text()
+
+#Gets budget
+url %>%
+html_nodes("span.ipc-metadata-list-item__list-content-item") %>%
+  .[3] %>%
+  html_text
+
+```
+
+
+### Obtain *2018 World Wide Box Office Data*
+```{r}
+#References
+#https://www.r-bloggers.com/2020/04/scrape-html-table-using-rvest/
+
+
+test_url <- read_html("https://www.boxofficemojo.com/year/world/2018")
+
+test_nestedlist <- test_url %>%
+  html_nodes("table") %>%
+  html_table(fill = TRUE)
+
+#Creates a DF for the table scraped
+test_table <- test_nestedlist[[1]]
+
+#Filters DF for Title and Worldwide Revenue
+test_filtered_table <- select(test_table, c('Release Group', 'Worldwide'))
+
+head(test_filtered_table, 10)
+
+```
+
+### Reads *movies_filtered2.csv* in
+```{r read file in}
+
+filtered_movies <- read_csv('movies_filtered2.csv', col_names =c('title','genres','original_language','production_companies','budget','revenue','runtime','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)
+
+head(filtered_movies, 10)
+
+```
+
+### Creates a dataframe with just title, budget, revenue
+```{r create a dataframe with just title, budget, revenue}
+money_df <- filtered_movies %>%
+  select('title', 'budget', 'revenue')
+
+head(money_df, 10)
+
+```
+
+### Sorts dataframe by Budget
+```{r order dataframe by budget}
+sorted_budget <- money_df[order(money_df$budget, decreasing = FALSE), ]
+
+head(sorted_budget, 10)
+
+#references:
+#https://www.geeksforgeeks.org/plot-only-one-variable-in-ggplot2-plot-in-r/#:~:text=q#plot%20%26%20seq_along%20Functions-,In%20this%20approach%20to%20drawing%20a%20ggplot#2%20plot%20based%20on,plot%20accordingly%20to%20the%20single
+
+B_plot <- ggplot(data = sorted_budget, aes(x = budget, y = 1:nrow(sorted_budget))) + geom_point() + ggtitle ("Budget") + ylab("Number of Occurences") + xlab("Budget ($100M)")
+
+B_plot
+
+```
+
+### Sorts dataframe Revenue
+```{r order dataframe by Revenue}
+sorted_revenue <- money_df[order(money_df$revenue, decreasing = FALSE), ]
+
+head(sorted_revenue, 10)
+
+#references:
+#https://www.geeksforgeeks.org/plot-only-one-variable-in-ggplot2-plot-in-r/#:~:text=q#plot%20%26%20seq_along%20Functions-,In%20this%20approach%20to%20drawing%20a%20ggplot#2%20plot%20based%20on,plot%20accordingly%20to%20the%20single
+
+
+R_plot <- ggplot(data = sorted_budget, aes(x = revenue, y = 1:nrow(sorted_budget))) + geom_point() + ggtitle ("Revenue") + ylab("Number of Occurences") + xlab("Revenue (1B)")
+
+R_plot
+```
+
+```{r}
+#Questions to ask
+#
+#At what point do I start to consider the values for both revenue and budget?
+#
+#How do I go about to take the scraped values of revenue and budget to replace
+#the values from our dataset?
+#
+#Remove the movies that do not pass a certain budget range or revenue range
+#For actors take the average of the revenue of the movies they are in
+#Can use a ranking system for the actors from a trusted magazine source
+#Regression trees by hand
+
+```
+
+
+
+
+
+
+
+
+
