@@ -1,0 +1,67 @@
+---
+title: "Untitled"
+author: "Chase Pheifer"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(stringr)
+library(tidyr)
+```
+
+```{r find top 5 frequent languages}
+# reference:
+# https://www.statology.org/plot-categorical-data-in-r/
+movies_df <- read.csv('movies_filtered_clean_revenue_and_budget.csv', header=TRUE)
+
+ggplot(movies_df, aes(x=original_language)) + geom_bar()
+
+```
+Top languages 5 are: en, hi, fr, ru, es.
+```{r add binary column to data set for each language}
+# reference:
+# https://www.tutorialspoint.com/how-to-create-a-column-with-binary-variable-based-on-a-condition-of-other-variable-in-an-r-data-frame
+
+movies_df$en <- ifelse(movies_df$original_language=='en',1,0)
+movies_df$hu <- ifelse(movies_df$original_language=='hi',1,0)
+movies_df$fr <- ifelse(movies_df$original_language=='fr',1,0)
+movies_df$ru <- ifelse(movies_df$original_language=='ru',1,0)
+movies_df$es <- ifelse(movies_df$original_language=='es',1,0)
+```
+ 
+Available genres in TMDB database: Action, Adventure, Animation, Comedy, Crime, Documentary, Drama, Family, Fantasy, History, Horror, Music, Mystery, Romance, Science Fiction, Thriller, TV Movie, War, and Western.
+```{r find top 5 appearing genres}
+genre_list <- c('Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Music', 'Mystery', 'Romance', 'Science Fiction', 'Thriller', 'TV Movie', 'War', 'Western')
+
+for (i in 1:length(genre_list)){
+  print(c('Count for',genre_list[i],'is',sum(str_count(movies_df$genres,genre_list[i]))))
+}
+
+```
+Top count of genres are action (2228), comedy (3098), drama (4203), romance (1655), and thriller (2112). 
+```{r add binary column to data set for each genre}
+movies_df$Action <- str_count(movies_df$genres,'Action')
+movies_df$Comedy <- str_count(movies_df$genres,'Comedy')
+movies_df$Drama <- str_count(movies_df$genres,'Drama')
+movies_df$Romance <- str_count(movies_df$genres,'Romance')
+movies_df$Thriller <- str_count(movies_df$genres,'Thriller')
+```
+
+```{r remove unnecessary columns}
+# reference:
+# https://www.tutorialspoint.com/how-to-remove-a-column-from-an-r-data-frame
+
+movies_df <- subset(movies_df,select=-c(genres,original_language))
+```
+
+```{r save file}
+write.csv(movies_df,file ='movies_filtered_all_attributes.csv', row.names = FALSE)
+
+
+```
+
+
