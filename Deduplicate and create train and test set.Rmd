@@ -29,22 +29,22 @@ library(dplyr)
 ```
 
 ```{r remove bad revenue and budget rows}
-movies_filtered <- read.csv('movies_filtered_adjInfl.csv', header=TRUE)
-
-plot(movies_filtered$budget, (movies_filtered$revenue / movies_filtered$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
-max(movies_filtered$revenue/movies_filtered$budget)
-min(movies_filtered$revenue/movies_filtered$budget)
-
-# Best way to remove strange revenue or budget rows is removing rows based on ratio of revenue to budget. A very small ratio likely means a huge budget with unrealistically small revenue and a large ratio means a huge revenue with an unrealistically small budget. The following removes the rows with the top and bottom half percent of revenue/budget ratio within the dataset:
-movies_filtered_clean_revenue_and_budget <- filter(movies_filtered, revenue/budget<max(quantile(revenue/budget,0.995))
-                           & revenue/budget>min(quantile(revenue/budget,0.005))) # only removes 1% of the dataset but makes the data much cleaner.
-max(movies_filtered_clean_revenue_and_budget$revenue/movies_filtered1$budget)
-min(movies_filtered_clean_revenue_and_budget$revenue/movies_filtered1$budget)
-
-plot(movies_filtered_clean_revenue_and_budget$budget, (movies_filtered_clean_revenue_and_budget$revenue / movies_filtered_clean_revenue_and_budget$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
+# movies_filtered <- read.csv('movies_filtered_adjInfl.csv', header=TRUE)
+# 
+# plot(movies_filtered$budget, (movies_filtered$revenue / movies_filtered$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
+# max(movies_filtered$revenue/movies_filtered$budget)
+# min(movies_filtered$revenue/movies_filtered$budget)
+# 
+# # Best way to remove strange revenue or budget rows is removing rows based on ratio of revenue to budget. A very small ratio likely means a huge budget with unrealistically small revenue and a large ratio means a huge revenue with an unrealistically small budget. The following removes the rows with the top and bottom half percent of revenue/budget ratio within the dataset:
+# movies_filtered_clean_revenue_and_budget <- filter(movies_filtered, revenue/budget<max(quantile(revenue/budget,0.995))
+#                            & revenue/budget>min(quantile(revenue/budget,0.005))) # only removes 1% of the dataset but makes the data much cleaner.
+# max(movies_filtered_clean_revenue_and_budget$revenue/movies_filtered1$budget)
+# min(movies_filtered_clean_revenue_and_budget$revenue/movies_filtered1$budget)
+# 
+# plot(movies_filtered_clean_revenue_and_budget$budget, (movies_filtered_clean_revenue_and_budget$revenue / movies_filtered_clean_revenue_and_budget$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
 ```
 ```{r write cleaned up revenue and budget file}
-write.csv(movies_filtered_clean_revenue_and_budget,file ='movies_filtered_clean_revenue_and_budget.csv', row.names = FALSE)
+# write.csv(movies_filtered_clean_revenue_and_budget,file ='movies_filtered_clean_revenue_and_budget.csv', row.names = FALSE)
 ```
 
 ```{r}
@@ -59,7 +59,7 @@ movies_all <- read.csv('movies_filtered_all_attributes.csv', header=TRUE)
 
 set.seed(500)
 
-movies_shuffled <- movies_all[sample(1:nrow(movies_filtered_clean_revenue_and_budget)), ]
+movies_shuffled <- movies_all[sample(1:nrow(movies_all)), ]
 
 trainIndex <- createDataPartition(movies_shuffled$revenue, p=0.8, list=FALSE) #80/20 split
 movie_train <- movies_shuffled[trainIndex,]
@@ -68,6 +68,7 @@ movie_test <- movies_shuffled[-trainIndex,]
 
 
 ```{r write training and test}
+write.csv(movies_shuffled,file='movies_train_test.csv',row.names=FALSE)
 write.csv(movie_train,file='movie_train.csv', row.names = FALSE)
 write.csv(movie_test,file='movie_test.csv', row.names = FALSE)
 ```

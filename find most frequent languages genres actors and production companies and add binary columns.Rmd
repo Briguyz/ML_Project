@@ -1,0 +1,110 @@
+---
+title: "find most frequent languages, genres, actors, and production companies and add binary columns"
+author: "Chase Pheifer"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(stringr)
+library(tidyr)
+```
+
+```{r find top 5 frequent languages}
+# reference:
+# https://www.statology.org/plot-categorical-data-in-r/
+movies_df <- read.csv('movies_filtered_clean_revenue_and_budget.csv', header=TRUE)
+
+```
+Top languages 5 are: en, hi, fr, ru, es.
+```{r add binary column to data set for each language}
+# reference:
+# https://www.tutorialspoint.com/how-to-create-a-column-with-binary-variable-based-on-a-condition-of-other-variable-in-an-r-data-frame
+
+movies_df$en <- ifelse(movies_df$original_language=='en',TRUE,FALSE)
+movies_df$hu <- ifelse(movies_df$original_language=='hi',TRUE,FALSE)
+movies_df$fr <- ifelse(movies_df$original_language=='fr',TRUE,FALSE)
+movies_df$ru <- ifelse(movies_df$original_language=='ru',TRUE,FALSE)
+movies_df$es <- ifelse(movies_df$original_language=='es',TRUE,FALSE)
+
+#could change from 1 to TRUE and 0 to FALSE if deemed necessary
+```
+ 
+Available genres in TMDB database: Action, Adventure, Animation, Comedy, Crime, Documentary, Drama, Family, Fantasy, History, Horror, Music, Mystery, Romance, Science Fiction, Thriller, TV Movie, War, and Western.
+```{r find top 5 appearing genres}
+genre_list <- c('Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Music', 'Mystery', 'Romance', 'Science Fiction', 'Thriller', 'TV Movie', 'War', 'Western')
+
+for (i in 1:length(genre_list)){
+  print(paste0('Count for ',genre_list[i],' is ',sum(str_count(movies_df$genres,genre_list[i]))))
+}
+```
+Top count of genres are action (2228), comedy (3098), drama (4203), romance (1655), and thriller (2112). 
+```{r add binary column to data set for each genre}
+movies_df$Action <- str_detect(movies_df$genres,'Action')
+movies_df$Comedy <- str_detect(movies_df$genres,'Comedy')
+movies_df$Drama <- str_detect(movies_df$genres,'Drama')
+movies_df$Romance <- str_detect(movies_df$genres,'Romance')
+movies_df$Thriller <- str_detect(movies_df$genres,'Thriller')
+
+# could use str_count() fxn if want 1 or 0 to be output instead of TRUE or FALSE
+```
+
+List of top actors from Somi: Dwayne Johnson, Samuel L. Jackson, Robert Downey, Scarlett Johansson, Tom Hanks, Johnny Depp, Tom Cruise, Chris Hemsworth, Will Smith, Jennifer Lawrence, Harrison Ford, Denzel Washington, Eddie Murphy, Orlando Bloom, Morgan Freeman, Robert De Niro, James Earl Jones, Bruce Willis, Julia Roberts, George Clooney, Meryl Streep, Angelina Jolie
+```{r find top 5 appearing actors from Somi's list}
+actor_list <- c('Dwayne Johnson', 'Samuel L. Jackson', 'Robert Downey Jr.', 'Scarlett Johansson', 'Tom Hanks', 'Johnny Depp', 'Tom Cruise', 'Chris Hemsworth', 'Will Smith', 'Jennifer Lawrence', 'Harrison Ford', 'Denzel Washington', 'Eddie Murphy', 'Orlando Bloom', 'Morgan Freeman', 'Robert De Niro', 'James Earl Jones', 'Bruce Willis', 'Julia Roberts', 'George Clooney', 'Meryl Streep', 'Angelina Jolie')
+
+for (i in 1:length(actor_list)){
+  print(paste0('Count for ',actor_list[i],' is ',sum(str_count(movies_df$credits,actor_list[i]))))
+}
+```
+Top 12 count of actors are Dwayne Johnson (45), Samuel L. Jackson (96), Tom Hanks (52), Johnny Depp (50), Harrison Ford (50), Denzel Washington (45), Morgan Freeman (63), Robert De Niro (72), Bruce Willis (76), Meryl Streep (50), Robert Downey Jr. (44), and Tom Cruise (44).
+```{r add binary column to data set for each genre}
+movies_df$`Dwayne Johnson` <- str_detect(movies_df$credits,'Dwayne Johnson')
+movies_df$`Samuel L. Jackson` <- str_detect(movies_df$credits,'Samuel L. Jackson')
+movies_df$`Tom Hanks` <- str_detect(movies_df$credits,'Tom Hanks')
+movies_df$`Johnny Depp` <- str_detect(movies_df$credits,'Johnny Depp')
+movies_df$`Harrison Ford` <- str_detect(movies_df$credits,'Harrison Ford')
+movies_df$`Denzel Washington` <- str_detect(movies_df$credits,'Denzel Washington')
+movies_df$`Morgan Freeman` <- str_detect(movies_df$credits,'Morgan Freeman')
+movies_df$`Robert De Niro` <- str_detect(movies_df$credits,'Robert De Niro')
+movies_df$`Bruce Willis` <- str_detect(movies_df$credits,'Bruce Willis')
+movies_df$`Meryl Streep` <- str_detect(movies_df$credits,'Meryl Streep')
+movies_df$`Robert Downey Jr.` <- str_detect(movies_df$credits,'Robert Downey Jr.')
+movies_df$`Tom Cruise` <- str_detect(movies_df$credits,'Tom Cruise')
+```
+
+List of top production companies from Somi: Warner Bros, Sony Pictures Motion Picture Group, Walt Disney Studios, Universal Pictures, 20th Century Fox, Paramount Pictures, Lionsgate Films, The Weinstein Company, Metro-Goldwyn-Mayer Studios, DreamWorks Pictures, Columbia Pictures, Marvel Studios, Pixar Animation, Legendary Picture Production, New Line Cinema, Relativity Media
+```{r find top 5 appearing production companies from Somi's list}
+production_company_list <- c('Warner Bros.', 'Sony', 'Walt Disney', 'Universal', '20th Century Fox', 'Paramount', 'Lionsgate', 'The Weinstein Company', 'Metro-Goldwyn-Mayer', 'DreamWorks', 'Columbia', 'Marvel', 'Pixar', 'Legendary Pictures', 'New Line Cinema', 'Relativity Media')
+
+for (i in 1:length(production_company_list)){
+  print(paste0('Count for ',production_company_list[i],' is ',sum(str_count(movies_df$production_companies,production_company_list[i]))))
+}
+```
+Top 5 count of production companies are Warner Bros (643), Universal (581), 20th Century Fox (452), Paramount (465), and Columbia (435), plus Pixar (27), Marvel (51), and Walt Disney (263) for curiosity's sake. 
+```{r add binary column to data set for each genre}
+movies_df$`Warner Bros` <- str_detect(movies_df$production_companies,'Warner Bros')
+movies_df$Universal <- str_detect(movies_df$production_companies,'Universal')
+movies_df$`20th Century Fox` <- str_detect(movies_df$production_companies,'20th Century Fox')
+movies_df$Paramount <- str_detect(movies_df$production_companies,'Paramount')
+movies_df$Columbia <- str_detect(movies_df$production_companies,'Columbia')
+movies_df$Pixar <- str_detect(movies_df$production_companies,'Pixar')
+movies_df$Marvel <- str_detect(movies_df$production_companies,'Marvel')
+movies_df$`Walt Disney` <- str_detect(movies_df$production_companies,'Walt Disney')
+```
+
+```{r remove unnecessary columns}
+# reference:
+# https://www.tutorialspoint.com/how-to-remove-a-column-from-an-r-data-frame
+
+movies_df <- subset(movies_df,select=-c(genres,original_language,credits,production_companies,title))
+```
+
+```{r save file}
+write.csv(movies_df,file ='movies_filtered_all_attributes.csv', row.names = FALSE)
+```
+
+
