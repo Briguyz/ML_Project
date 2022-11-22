@@ -1,0 +1,118 @@
+---
+title: "svm_Budget_Studio"
+author: "Kyra Hendrickson"
+date: "2022-11-22"
+output: html_document
+---
+determine what parameters your hyperplane needs to separate data in terms of: 
+ratio <= 1
+ratio > 1
+Answers: which budget and studio company combination will make money by classifying data into ratio<=1 and ratio>1
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# libraries
+library(tidyverse)
+library(readr)
+library(DataExplorer)
+library(plotly)
+library(caret)
+library(ggplot2)
+library(dplyr)
+
+install.packages("e1071")
+library(e1071)
+
+library(MASS) 
+library(reshape2) 
+```
+
+```{r}
+# download test and training data
+names = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','Dwayne.Johnson','Samuel.L..Jackson','Tom.Hanks','Johnny.Depp','Harrison.Ford','Denzel.Washington',	'Morgan.Freeman',	'Robert.De.Niro',	'Bruce.Willis',	'Meryl.Streep',	'Robert.Downey.Jr.',	'Tom.Cruise',	'Warner.Bros',	'Universal',	'X20th.Century.Fox',	'Paramount',	'Columbia' ,	'Pixar',	'Marvel', 	'Walt.Disney')
+
+movie_test <- read_csv('movie_test.csv', col_names=names, trim_ws = TRUE, show_col_types = FALSE)[-c(1), ]
+
+```
+
+
+```{r}
+# create net revenue col
+movie_test$budget <- as.numeric(movie_test$budget)
+movie_test$revenue <- as.numeric(movie_test$revenue)
+movie_test$net.revenue <- (movie_test$revenue - movie_test$budget)
+
+```
+
+```{r}
+# create revenue/budget ratio, this is our indicator variable
+movie_test$ratio <- abs(movie_test$net.revenue/movie_test$budget)
+```
+
+```{r}
+# create a new col as indicator col, need to seperate ratio into <1 and >1
+movie_test$ratio_indicator<-factor(ifelse(movie_test$ratio<1,"No.Profit","Profit"))
+```
+
+
+```{r}
+# studios into numerical attribute, melt_test is the new testing data
+melt_test <- melt(movie_test, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','Dwayne.Johnson','Samuel.L..Jackson','Tom.Hanks','Johnny.Depp','Harrison.Ford','Denzel.Washington',	'Morgan.Freeman',	'Robert.De.Niro',	'Bruce.Willis',	'Meryl.Streep',	'Robert.Downey.Jr.',	'Tom.Cruise','net.revenue','ratio','ratio_indicator')) 
+
+melt_test = melt_test[melt_test$value ==TRUE, ]
+
+names(melt_test)[31] = "studio"
+
+studio_vector <-unclass(melt_test$studio)
+studio_vector
+
+melt_test$studio_unclass <- studio_vector
+
+```
+
+```{r}
+# examine data further by plotting studio vs. budget
+# would be good if you colored Profit and No.Profit so you can see where a split should be
+test_budget = melt_test$budget
+plot(test_budget,studio_vector,xlab = "Budget", ylab = "Studio")
+```
+
+```{r}
+# plot 
+studio_profit = melt_test$studio_unclass[melt_test$ratio_indicator =="Profit"]
+budget_profit = melt_test$budget[melt_test$ratio_indicator =="Profit"]
+
+studio_no.profit = melt_test$studio_unclass[melt_test$ratio_indicator =="No.Profit"]
+budget_no.profit = melt_test$budget[melt_test$ratio_indicator =="No.Profit"]
+
+plot(budget_profit,studio_profit,col="green",xlab = "Budget",ylab = "Studio")
+par(new=TRUE)
+plot(budget_no.profit,studio_no.profit,col="red",xlab = ".",ylab = ".")
+```
+```{r}
+cols = c("studio_unclass","budget","ratio_indicator")
+svm_traindata1 = melt_test[cols]
+```
+
+create svm model
+```{r}
+svmfit <- svm(ratio_indicator ~.,data = svm_traindata1,cost=0.1,scale=FALSE)
+
+print(svmfit)
+```
+
+
+study model
+```{r}
+plot(svmfit,svm_traindata[,cols])
+```
+
+
+
+```{r}
+# try it for budget and vote average
+
+```
+
