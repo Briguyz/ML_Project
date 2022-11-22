@@ -7,7 +7,8 @@ output: html_document
 determine what parameters your hyperplane needs to separate data in terms of: 
 ratio <= 1
 ratio > 1
-Answers: which budget and studio company combination will make money by classifying data into ratio<=1 and ratio>1
+Answers: Which budget and studio company combination will make money by classifying data into ratio<=1 and ratio>1
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -91,7 +92,9 @@ plot(budget_profit,studio_profit,col="green",xlab = "Budget",ylab = "Studio")
 par(new=TRUE)
 plot(budget_no.profit,studio_no.profit,col="red",xlab = ".",ylab = ".")
 ```
+
 ```{r}
+# final svm ready training set
 cols = c("studio_unclass","budget","ratio_indicator")
 svm_traindata1 = melt_test[cols]
 ```
@@ -108,11 +111,12 @@ study model
 ```{r}
 plot(svmfit,svm_traindata[,cols])
 ```
-
-
+to do:
+ run k-fold cross validation
+ test it out and see what it gives! 
 
 ```{r}
-# try it for budget and vote average
+#
 
 ```
 
