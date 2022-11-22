@@ -1,0 +1,116 @@
+---
+title: "Regression Tree and SVM Model"
+author: "Brian"
+date: "2022-11-22"
+output: html_document
+---
+
+## Including Libraries
+```{r, include=FALSE}
+library(tidyverse)
+library(readr)
+library(DataExplorer)
+library(plotly)
+library(caret)
+library(ggplot2)
+library(dplyr)
+library(e1071)
+library(MASS) 
+library(reshape2) 
+library(tidyr)
+library(knitr)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+
+```
+
+# SVM with *voter_average* and *budget*
+```{r}
+# Download Test and Training data
+movie_test <- read_csv('movie_test.csv', trim_ws = TRUE)
+movie_train <- read_csv('movie_train.csv', trim_ws = TRUE)
+movie_dataset <- read_csv('movies_train_test.csv', trim_ws = TRUE)
+
+```
+
+```{r}
+# Create profit column to see if the movie was successful
+movie_profit <- data.frame(budget = movie_test$budget,
+                           vote_average = movie_test$vote_average,
+                           profit = movie_test$budget - movie_test$revenue)
+
+#Cleaned budget so only movies with budgets equal to or greater than 50 million are used
+cleaned_profit <-  movie_profit %>%
+  filter(budget >= 50000000) %>%
+  filter(budget < 250000000)
+
+#Change Scientific notation to full digit 
+# movie_profit <- movie_profit %>% 
+#   mutate(profit = format(profit, scientific = FALSE, big.mark = ","))
+# 
+# movie_profit <- movie_profit %>% 
+#   mutate(budget = format(budget, scientific = FALSE, big.mark = ","))
+
+
+# Set negative values to 0
+movie_profit[movie_profit$profit <= 0, "profit"] <- 0
+
+# Set positive values to 1
+movie_profit[movie_profit$profit >= 1, "profit"] <- 1
+
+# Set profit as a factor
+movie_profit$profit <- as.factor(movie_profit$profit)
+
+```
+
+
+
+```{r}
+# Working to plot data so it is linearly separable
+# ggplot(movie_profit, aes(profit)) + geom_histogram()
+# 
+ ggplot(movie_profit, aes(budget, vote_average)) + geom_point(aes(colour = profit))
+ ggplot(cleaned_profit, aes(budget, vote_average)) + geom_point(aes(colour = profit))
+
+# 
+# 
+# ggplot(cleaned_test, aes(budget,vote_average)) + geom_point()
+# 
+# ggplot(cleaned_test, aes(budget)) + geom_freqpoly()
+# p <- ggplot(cleaned_test, aes(budget)) + geom_histogram() + geom_vline(aes(xintercept=mean(budget)), color="blue",
+#              linetype="dashed") + labs(title="Budget historgram plot",x="budget(50M-250M)", y = "Count")+
+#   theme_classic()
+# p
+# 
+# table(discretize(cleaned_test$budget, breaks = 3))
+# hist(cleaned_test$budget, breaks = 20, main = "Equal Frequency")
+# abline(v = discretize(cleaned_test$budget, breaks = 3, 
+#   onlycuts = TRUE), col = "red")
+# 
+# 
+# table(discretize(x, breaks = 3))
+# hist(x, breaks = 20, main = "Equal Frequency")
+# abline(v = discretize(x, breaks = 3, 
+#   onlycuts = TRUE), col = "red")
+```
+
+# Regression Tree with *Revenue* and *budget* to determine profit
+```{r}
+# Create profit column to see if the movie was successful
+movie_tree <- subset(movie_test, select = -c(vote_count))
+movie_tree$profit <- movie_tree$revenue - movie_tree$budget
+
+# Set negative values to 0
+movie_tree[movie_tree$profit <= 0, "profit"] <- 0
+
+# Set positive values to 1
+movie_tree[movie_tree$profit >= 1, "profit"] <- 1
+
+movie_tree$profit <- factor(movie_tree$profit, levels = 0:1, labels = c("No", "Yes"))
+
+
+tree.model <- rpart(profit ~ ., data = movie_tree)
+fancyRpartPlot(tree.model)
+```
+
