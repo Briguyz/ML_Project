@@ -7,7 +7,7 @@ output: html_document
 determine what parameters your hyperplane needs to separate data in terms of: 
 ratio <= 1
 ratio > 1
-Answers: Which budget and studio company combination will make money by classifying data into ratio<=1 and ratio>1
+Answers which budget and studio company combination will make money by classifying data into ratio<=1 and ratio>1
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -29,36 +29,57 @@ library(e1071)
 library(MASS) 
 library(reshape2) 
 ```
-
+Prepping data for svm 
 ```{r}
 # download test and training data
 names = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','Dwayne.Johnson','Samuel.L..Jackson','Tom.Hanks','Johnny.Depp','Harrison.Ford','Denzel.Washington',	'Morgan.Freeman',	'Robert.De.Niro',	'Bruce.Willis',	'Meryl.Streep',	'Robert.Downey.Jr.',	'Tom.Cruise',	'Warner.Bros',	'Universal',	'X20th.Century.Fox',	'Paramount',	'Columbia' ,	'Pixar',	'Marvel', 	'Walt.Disney')
 
+movie_train <- read_csv('movie_train.csv', col_names=names, trim_ws = TRUE, show_col_types = FALSE)[-c(1), ]
 movie_test <- read_csv('movie_test.csv', col_names=names, trim_ws = TRUE, show_col_types = FALSE)[-c(1), ]
 
 ```
 
-
 ```{r}
+## Create indicator column
+
 # create net revenue col
+movie_train$budget <- as.numeric(movie_train$budget)
+movie_train$revenue <- as.numeric(movie_train$revenue)
+movie_train$net.revenue <- (movie_train$revenue - movie_train$budget)
+
 movie_test$budget <- as.numeric(movie_test$budget)
 movie_test$revenue <- as.numeric(movie_test$revenue)
 movie_test$net.revenue <- (movie_test$revenue - movie_test$budget)
 
-```
-
-```{r}
-# create revenue/budget ratio, this is our indicator variable
+# create revenue/budget ratio col, this is our indicator variable
+movie_train$ratio <- abs(movie_train$net.revenue/movie_train$budget)
 movie_test$ratio <- abs(movie_test$net.revenue/movie_test$budget)
-```
 
-```{r}
 # create a new col as indicator col, need to seperate ratio into <1 and >1
+movie_train$ratio_indicator<-factor(ifelse(movie_train$ratio<1,"No.Profit","Profit"))
 movie_test$ratio_indicator<-factor(ifelse(movie_test$ratio<1,"No.Profit","Profit"))
 ```
 
 
 ```{r}
+## Turn studio into numerical attribute, get one column 
+
+# studios into numerical attribute, melt_test is the new testing data
+melt_train <- melt(movie_train, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','Dwayne.Johnson','Samuel.L..Jackson','Tom.Hanks','Johnny.Depp','Harrison.Ford','Denzel.Washington',	'Morgan.Freeman',	'Robert.De.Niro',	'Bruce.Willis',	'Meryl.Streep',	'Robert.Downey.Jr.',	'Tom.Cruise','net.revenue','ratio','ratio_indicator')) 
+
+melt_train = melt_train[melt_train$value ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
+names(melt_train)[31] = "studio" # rename 31st col studio
+
+studio_vector_train <-unclass(melt_train$studio)
+studio_vector_train
+
+melt_train$studio_unclass <- studio_vector_train
+
+```
+
+```{r}
+## same process for testing set 
+
 # studios into numerical attribute, melt_test is the new testing data
 melt_test <- melt(movie_test, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','Dwayne.Johnson','Samuel.L..Jackson','Tom.Hanks','Johnny.Depp','Harrison.Ford','Denzel.Washington',	'Morgan.Freeman',	'Robert.De.Niro',	'Bruce.Willis',	'Meryl.Streep',	'Robert.Downey.Jr.',	'Tom.Cruise','net.revenue','ratio','ratio_indicator')) 
 
@@ -66,57 +87,158 @@ melt_test = melt_test[melt_test$value ==TRUE, ]
 
 names(melt_test)[31] = "studio"
 
-studio_vector <-unclass(melt_test$studio)
-studio_vector
+studio_vector_test <-unclass(melt_test$studio)
+studio_vector_test
 
-melt_test$studio_unclass <- studio_vector
-
+melt_test$studio_unclass <- studio_vector_test
 ```
+notes: 
+studio_unclass -> col of numbers 1-8 corresponding to studio:
+  [1] "Warner.Bros"       "Universal"         "X20th.Century.Fox" "Paramount"        
+  [5] "Columbia"          "Pixar"             "Marvel"            "Walt.Disney"  
 
 ```{r}
-# examine data further by plotting studio vs. budget
-# would be good if you colored Profit and No.Profit so you can see where a split should be
-test_budget = melt_test$budget
-plot(test_budget,studio_vector,xlab = "Budget", ylab = "Studio")
-```
-
-```{r}
-# plot 
-studio_profit = melt_test$studio_unclass[melt_test$ratio_indicator =="Profit"]
-budget_profit = melt_test$budget[melt_test$ratio_indicator =="Profit"]
-
-studio_no.profit = melt_test$studio_unclass[melt_test$ratio_indicator =="No.Profit"]
-budget_no.profit = melt_test$budget[melt_test$ratio_indicator =="No.Profit"]
-
-plot(budget_profit,studio_profit,col="green",xlab = "Budget",ylab = "Studio")
-par(new=TRUE)
-plot(budget_no.profit,studio_no.profit,col="red",xlab = ".",ylab = ".")
-```
-
-```{r}
-# final svm ready training set
+# final svm-ready training and test set
 cols = c("studio_unclass","budget","ratio_indicator")
-svm_traindata1 = melt_test[cols]
+budgetStudio_trian = melt_train[cols]
+budgetStudio_test = melt_test[cols]
 ```
 
-create svm model
-```{r}
-svmfit <- svm(ratio_indicator ~.,data = svm_traindata1,cost=0.1,scale=FALSE)
-
-print(svmfit)
-```
-
-
-study model
-```{r}
-plot(svmfit,svm_traindata[,cols])
-```
-to do:
- run k-fold cross validation
- test it out and see what it gives! 
 
 ```{r}
-#
+# plot training data
+yp_train = melt_train$studio_unclass[melt_train$ratio_indicator =="Profit"] # profit y values
+xp_train = melt_train$budget[melt_train$ratio_indicator =="Profit"] # profit x-values
 
+ynp_train = melt_train$studio_unclass[melt_train$ratio_indicator =="No.Profit"] # no profit y values
+xnp_train = melt_train$budget[melt_train$ratio_indicator =="No.Profit"] # no profit x-values
+
+plot(xp_train,yp_train,main="Studio vs. Budget",col="green",xlab = "Budget",ylab = "Studio")
+points(xnp_train,ynp_train,col="red")
+legend(x = "topright", lty = c(6,6), text.font = 2, 
+       col= c("green","red"),text.col = "blue", 
+       legend=c("Profit", "No Profit"))
 ```
+```{r}
+# plot test data
+yp_test = melt_test$studio_unclass[melt_test$ratio_indicator =="Profit"] # profit y values
+xp_test = melt_test$budget[melt_test$ratio_indicator =="Profit"] # profit x-values
+
+ynp_test = melt_test$studio_unclass[melt_test$ratio_indicator =="No.Profit"] # no profit y values
+xnp_test = melt_test$budget[melt_test$ratio_indicator =="No.Profit"] # no profit x-values
+
+plot(xp_test,yp_test,main="Studio vs. Budget",col="green",xlab = "Budget",ylab = "Studio")
+points(xnp_test,ynp_test,col="red")
+legend(x = "topright", lty = c(6,6), text.font = 2, 
+       col= c("green","red"),text.col = "blue", 
+       legend=c("Profit", "No Profit"))
+```
+
+1-Warner.Bros, 2-Universal,  3-X20th.Century.Fox,  4-Paramount,  5-Columbia,  6-Pixar,  7-Marvel, 8-Walt.Disney
+
+
+
+```{r}
+# final svm-ready training set
+cols = c("studio_unclass","budget","ratio_indicator")
+trainData = melt_train[cols]
+testData = melt_test[cols]
+```
+
+
+
+Create svm models. 
+Three experiments: polynomial, sigmoid, and radial
+1. Polynomial kernel 
+```{r}
+polymodel <- svm(formula = ratio_indicator ~.,
+              data = trainData,
+              kernel = 'polynomial',
+              gamma=1, 
+              cost =1 
+              )
+summary(polymodel)
+```
+
+evaluating model
+```{r}
+# visualize results
+plot(polymodel,trainData)
+# Predicting using the test set
+ypoly_pred = predict(polymodel,newdata = testData[-3])
+cm = table(testData[,3], ypoly_pred)
+tn = cm[1]
+fn = cm[2]
+fp = cm[3]
+tp = cm[4]
+n = sum(cm)
+accuracy = (tp + tn)/n
+precision = tp/(fp + tp)
+
+print(cm)
+sprintf('accuracy: %s ', accuracy)
+sprintf('precision: %s ', precision)
+```
+
+2. Sigmoid kernel
+```{r}
+sigmodel <- svm(formula = ratio_indicator ~.,
+              data = trainData,
+              kernel = 'sigmoid',
+              gamma=1, 
+              cost =1 
+              )
+summary(sigmodel)
+```
+
+```{r}
+# visualize results
+plot(sigmodel,trainData)
+# Evaluate model
+yradial_pred = predict(sigmodel,newdata = testData[-3])
+cm = table(testData[,3], y_pred)
+tn = cm[1]
+fn = cm[2]
+fp = cm[3]
+tp = cm[4]
+n = sum(cm)
+accuracy = (tp + tn)/n
+precision = tp/(fp + tp)
+
+print(cm)
+sprintf('accuracy: %s ', accuracy)
+sprintf('precision: %s ', precision)
+```
+
+3. Radial kernel 
+```{r}
+radialmodel <- svm(formula = ratio_indicator ~.,
+              data = trainData,
+              kernel = 'radial',
+              gamma=1, 
+              cost =5 
+              )
+summary(radialmodel)
+```
+
+
+```{r}
+# visualize results
+plot(radialmodel,trainData)
+# Evaluate model
+yradial_pred = predict(radialmodel,newdata = testData[-3])
+cm = table(testData[,3], y_pred)
+tn = cm[1]
+fn = cm[2]
+fp = cm[3]
+tp = cm[4]
+n = sum(cm)
+accuracy = (tp + tn)/n
+precision = tp/(fp + tp)
+
+print(cm)
+sprintf('accuracy: %s ', accuracy)
+sprintf('precision: %s ', precision)
+```
+tuning parameters from each experiment
 
