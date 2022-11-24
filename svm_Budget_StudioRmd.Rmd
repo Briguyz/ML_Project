@@ -71,7 +71,6 @@ melt_train = melt_train[melt_train$value ==TRUE, ] # takes out duplicates by get
 names(melt_train)[31] = "studio" # rename 31st col studio
 
 studio_vector_train <-unclass(melt_train$studio)
-studio_vector_train
 
 melt_train$studio_unclass <- studio_vector_train
 
@@ -88,7 +87,7 @@ melt_test = melt_test[melt_test$value ==TRUE, ]
 names(melt_test)[31] = "studio"
 
 studio_vector_test <-unclass(melt_test$studio)
-studio_vector_test
+
 
 melt_test$studio_unclass <- studio_vector_test
 ```
@@ -118,8 +117,7 @@ points(xnp_train,ynp_train,col="red")
 legend(x = "topright", lty = c(6,6), text.font = 2, 
        col= c("green","red"),text.col = "blue", 
        legend=c("Profit", "No Profit"))
-```
-```{r}
+
 # plot test data
 yp_test = melt_test$studio_unclass[melt_test$ratio_indicator =="Profit"] # profit y values
 xp_test = melt_test$budget[melt_test$ratio_indicator =="Profit"] # profit x-values
@@ -148,8 +146,46 @@ testData = melt_test[cols]
 
 
 Create svm models. 
-Three experiments: polynomial, sigmoid, and radial
-1. Polynomial kernel 
+Three experiments: linear (control), polynomial, and radial
+
+1. Linear kernel 
+```{r}
+linearmodel <- svm(formula = ratio_indicator ~.,
+              data = trainData,
+              kernel = 'linear',
+              gamma=1, 
+              cost =1 
+              )
+summary(linearmodel)
+```
+
+```{r}
+# visualize results
+plot(linearmodel,trainData,main="Studio vs. Budget (linear model)",xlab = "Budget",ylab = "Studio")
+
+plot(xp_test,yp_test,main="Studio vs. Budget",col="green",xlab = "Budget",ylab = "Studio")
+points(xnp_test,ynp_test,col="red")
+legend(x = "topright", lty = c(6,6), text.font = 2, 
+       col= c("green","red"),text.col = "blue", 
+       legend=c("Profit", "No Profit")) # test set for comparison
+
+# Evaluate model
+ylinear_pred = predict(linearmodel,newdata = testData[-3])
+cm = table(testData[,3], ylinear_pred)
+tn = cm[1]
+fn = cm[2]
+fp = cm[3]
+tp = cm[4]
+n = sum(cm)
+accuracy = (tp + tn)/n
+precision = tp/(fp + tp)
+
+print(cm)
+sprintf('accuracy: %s ', accuracy)
+sprintf('precision: %s ', precision)
+```
+
+2. Polynomial kernel 
 ```{r}
 polymodel <- svm(formula = ratio_indicator ~.,
               data = trainData,
@@ -164,6 +200,13 @@ evaluating model
 ```{r}
 # visualize results
 plot(polymodel,trainData)
+
+plot(xp_test,yp_test,main="Studio vs. Budget (polynomial model)",col="green",xlab = "Budget",ylab = "Studio")
+points(xnp_test,ynp_test,col="red")
+legend(x = "topright", lty = c(6,6), text.font = 2, 
+       col= c("green","red"),text.col = "blue", 
+       legend=c("Profit", "No Profit")) # test set for comparison
+
 # Predicting using the test set
 ypoly_pred = predict(polymodel,newdata = testData[-3])
 cm = table(testData[,3], ypoly_pred)
@@ -179,37 +222,6 @@ print(cm)
 sprintf('accuracy: %s ', accuracy)
 sprintf('precision: %s ', precision)
 ```
-
-2. Sigmoid kernel
-```{r}
-sigmodel <- svm(formula = ratio_indicator ~.,
-              data = trainData,
-              kernel = 'sigmoid',
-              gamma=1, 
-              cost =1 
-              )
-summary(sigmodel)
-```
-
-```{r}
-# visualize results
-plot(sigmodel,trainData)
-# Evaluate model
-yradial_pred = predict(sigmodel,newdata = testData[-3])
-cm = table(testData[,3], y_pred)
-tn = cm[1]
-fn = cm[2]
-fp = cm[3]
-tp = cm[4]
-n = sum(cm)
-accuracy = (tp + tn)/n
-precision = tp/(fp + tp)
-
-print(cm)
-sprintf('accuracy: %s ', accuracy)
-sprintf('precision: %s ', precision)
-```
-
 3. Radial kernel 
 ```{r}
 radialmodel <- svm(formula = ratio_indicator ~.,
@@ -225,9 +237,15 @@ summary(radialmodel)
 ```{r}
 # visualize results
 plot(radialmodel,trainData)
+
+plot(xp_test,yp_test,main="Studio vs. Budget",col="green",xlab = "Budget",ylab = "Studio")
+points(xnp_test,ynp_test,col="red")
+legend(x = "topright", lty = c(6,6), text.font = 2, 
+       col= c("green","red"),text.col = "blue", 
+       legend=c("Profit", "No Profit")) # test set for comparison
 # Evaluate model
 yradial_pred = predict(radialmodel,newdata = testData[-3])
-cm = table(testData[,3], y_pred)
+cm = table(testData[,3], yradial_pred)
 tn = cm[1]
 fn = cm[2]
 fp = cm[3]
@@ -240,5 +258,15 @@ print(cm)
 sprintf('accuracy: %s ', accuracy)
 sprintf('precision: %s ', precision)
 ```
-tuning parameters from each experiment
+to do: tuning gamma and cost for each experiment, start with radial
+```{r}
+#find optimal parameters in a specified range
+
+
+```
+
+extract weights
+```{r}
+
+```
 
