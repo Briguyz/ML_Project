@@ -1,0 +1,117 @@
+---
+title: "NN with keras"
+author: "Chase Pheifer"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(keras) # it took me a while to get this installed correctly, so if you want to run this script, feel free to ask me for help with the installation of keras
+
+library(data.table)
+library(Metrics)
+
+set.seed(500)
+seed_value = 500
+Sys.setenv('PYTHONHASHSEED' = as.character(seed_value))
+tensorflow::set_random_seed(seed_value) # only figured out how to do this from a modification of the guidance put forth here: https://stackoverflow.com/questions/48631576/reproducible-results-using-keras-with-tensorflow-backend
+```
+
+```{r load train set}
+train <- fread('movie_train.csv')
+```
+
+```{r separate training inputs and outputs}
+train_x <- as.matrix(train[,c(1,3,6:35)]) 
+# x designates input - all columns except revenue, vote count, and vote average. Keras cannot take in a data.frame, so have to convert to matrix
+```
+
+```{r}
+train_y <- as.matrix(train[,c(2,4:5)]) # outputs are revenue, vote average, and vote count
+```
+
+```{r define structure of NN}
+Sys.setenv("TF_CPP_MIN_LOG_LEVEL"="3") # quiet output messages, figured out how to do this per https://stackoverflow.com/questions/68960205/is-it-there-something-wrong-with-tensorflow
+
+model <-
+keras_model_sequential() %>% # sequential means feed-forward NN
+
+layer_dropout(rate = 0.5) %>%  # just using rate shown in slides. Using dropout because Dr. Leal said most NN will benefit from it
+  
+layer_dense(units = round(sqrt(dim(train_x)[2])), # round(sqrt(dim(train_x)[2]) 
+            # old rule of thumb from class - number of hidden layer nodes equals sqrt(# input layer nodes)
+            
+            input_shape = dim(train_x)[2],
+            
+            activation = 'relu', # try to do it non-linear - relu, sigmoid and then compare - relu much better
+            
+            kernel_initializer = initializer_he_normal()
+            # listed as a better weight initializer for ReLu activation fxn (not sure the best for sigmoid, but I am guessing               it is glorot)
+) %>%
+  
+# layer_batch_normalization() %>% # batch normalization to deal with vanishing gradient as training goes on; not sure how to   implement for this problem, as I don't know how to "unnormalize" the final output"
+
+layer_dropout(rate = 0.5) %>%   
+layer_dense(units = dim(train_y)[2], 
+            # layer dense means fully connected NN
+            
+            activation = 'linear' # check if you can feed multiple activation functions (in order to use sigmoid for vote score) -- not able to figure it out atm
+            # regression problem can have linear, relu, elu, or selu activation fxn
+) 
+```
+
+```{r specify how model will be trained}
+# reference:
+# https://www.codingprof.com/3-easy-ways-to-calculate-the-relative-absolute-error-rae-in-r/
+# https://stackoverflow.com/questions/51316307/custom-loss-function-in-r-keras/51415066#51415066
+
+relative_error <- custom_metric('relative_error',function(y_true,y_pred){
+    return(rae(actual=y_true,predicted=y_pred))})
+
+model %>% compile (
+  loss = 'mean_squared_error', 
+  # listed in the slides as a loss function for regression and also listed under loss function column on next slide
+  
+  metrics = relative_error,
+  # relative absolute error allows comparison between models
+  
+  optimizer = optimizer_adam(learning_rate = 0.001) 
+  # adam is listed in the slides as a modern optimizer and faster than gd or sgd; lr was arbitrarily set based on the example     in the slides for adam
+)
+```
+
+```{r begin training}
+model %>% fit(
+  train_x, train_y,
+  
+  epochs = 10,
+  # I think epoch is the number of time the gradient descent (or the optimizer) is run... higher means more expensive but       possibly more accurate; currently set arbitrarily from value in slides example
+  
+  batch_size = 32, 
+  # I think batch size is how many rows the gradient is calculated from... not a significant factor for our project
+  
+  validation_split = 0.2, 
+  # I think this is the percent split between training and validation in each epoch; ; currently set arbitrarily from number     in slides example
+  
+  name=features, #not sure if this does anything
+  
+  callbacks = list(callback_early_stopping(monitor = "val_loss", patience = 1))
+)
+```
+
+```{r final evaluation}
+# When model is where I want it, I think I will do this as the last thing:
+# model.evaluate(test_x,test_y)
+```
+
+
+```{r}
+summary(model)
+
+predict_x = as.matrix(fread('movie_random_predict_x.csv'))
+
+model %>% predict(predict_x) # How to get output columns to be labeled?
+```
+
