@@ -134,11 +134,11 @@ melt_test3$genre_unclass <- genre_vector_test
 
 ```{r}
 ## train
-svm_data1 <- subset(melt_train3, select = -c(value, value2, value3,en,hu,fr,es))
-svm_data2 <- subset(melt_train3, select = -c(studio, value, actor, value2, genre, value3,en,hu,fr,es))
+svm_data1 <- subset(melt_train3, select = -c(value, value2, value3,en,hu,fr,es,ru))
+svm_data2 <- subset(melt_train3, select = -c(studio, value, actor, value2, genre, value3,en,hu,fr,es,ru))
 ## test
-svm_data3 <- subset(melt_test3, select = -c(value, value2, value3,en,hu,fr,es))
-svm_data4 <- subset(melt_test3, select = -c(studio, value, actor, value2, genre, value3,en,hu,fr,es))
+svm_data3 <- subset(melt_test3, select = -c(value, value2, value3,en,hu,fr,es,ru))
+svm_data4 <- subset(melt_test3, select = -c(studio, value, actor, value2, genre, value3,en,hu,fr,es,ru))
 ```
 
 
@@ -166,7 +166,6 @@ print(cor_data)
 ```
 ** notes: 
 Assuming linear correlation:
-- NA on langunage since all the movies are in english
 - Things that have most correlation with net.revenue:
   > Budget with a correlation of 0.67
   > Production company with a correlation of 0.18
