@@ -55,6 +55,7 @@ movie_test$ratio_indicator<-factor(ifelse(movie_test$ratio<1,"No.Profit","Profit
 ```{r}
 ## Turn studio into numerical attribute, get one column 
 
+## training set
 melt_train <- melt(movie_train, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','Dwayne.Johnson','Samuel.L..Jackson','Tom.Hanks','Johnny.Depp','Harrison.Ford','Denzel.Washington',	'Morgan.Freeman',	'Robert.De.Niro',	'Bruce.Willis',	'Meryl.Streep',	'Robert.Downey.Jr.',	'Tom.Cruise','net.revenue','ratio','ratio_indicator')) 
 
 melt_train = melt_train[melt_train$value ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
@@ -129,50 +130,28 @@ genre_vector_test <-unclass(melt_test3$genre)
 melt_test3$genre_unclass <- genre_vector_test
 ```
 
-```{r}
-## Turn languange into numerical attribute, get one column 
 
-melt_train4 <- melt(melt_train3, id = c('budget','revenue','runtime','vote_average','vote_count','net.revenue','ratio','ratio_indicator','studio','value','studio_unclass','actor','value2','actor_unclass','genre','value3','genre_unclass')) 
-
-names(melt_train4)[19] = "value4" # rename 19th col studio
-
-melt_train4 = melt_train4[melt_train4$value4 ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
-names(melt_train4)[18] = "languange" # rename 18nd col studio
-
-languange_vector_train <-unclass(melt_train4$languange)
-
-melt_train4$languange_unclass <- languange_vector_train
-
-## test data
-melt_test4 <- melt(melt_test3, id = c('budget','revenue','runtime','vote_average','vote_count','net.revenue','ratio','ratio_indicator','studio','value','studio_unclass','actor','value2','actor_unclass','genre','value3','genre_unclass')) 
-
-names(melt_test4)[19] = "value4" # rename 19th col studio
-
-melt_test4 = melt_test4[melt_test4$value4 ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
-names(melt_test4)[18] = "languange" # rename 18nd col studio
-
-languange_vector_test <-unclass(melt_test4$languange)
-
-melt_test4$languange_unclass <- languange_vector_test
-```
 
 ```{r}
 ## train
-svm_data1 <- subset(melt_train4, select = -c(value, value2, value3, value4))
-svm_data2 <- subset(melt_train4, select = -c(studio, value, actor, value2, genre, value3, languange, value4))
+svm_data1 <- subset(melt_train3, select = -c(value, value2, value3,en,hu,fr,es))
+svm_data2 <- subset(melt_train3, select = -c(studio, value, actor, value2, genre, value3,en,hu,fr,es))
 ## test
-svm_data3 <- subset(melt_test4, select = -c(value, value2, value3, value4))
-svm_data4 <- subset(melt_test4, select = -c(studio, value, actor, value2, genre, value3, languange, value4))
+svm_data3 <- subset(melt_test3, select = -c(value, value2, value3,en,hu,fr,es))
+svm_data4 <- subset(melt_test3, select = -c(studio, value, actor, value2, genre, value3,en,hu,fr,es))
 ```
 
 
 ```{r}
+
 data <- write_excel_csv(svm_data1, "svm_traindata_labeled.csv")
 data <- write_excel_csv(svm_data2, "svm_traindata.csv")
 
-data <- write_excel_csv(svm_data1, "svm_testdata_labeled.csv")
-data <- write_excel_csv(svm_data2, "svm_testdata.csv")
+data <- write_excel_csv(svm_data3, "svm_testdata_labeled.csv")
+data <- write_excel_csv(svm_data4, "svm_testdata.csv")
 ```
+
+
 
 ```{r}
 # create correlation matrix to decide what attribute best to use with budget
