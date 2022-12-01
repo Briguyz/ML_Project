@@ -55,7 +55,6 @@ movie_test$ratio_indicator<-factor(ifelse(movie_test$ratio<1,"No.Profit","Profit
 ```{r}
 ## Turn studio into numerical attribute, get one column 
 
-# studios into numerical attribute, melt_test is the new testing data
 melt_train <- melt(movie_train, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','Dwayne.Johnson','Samuel.L..Jackson','Tom.Hanks','Johnny.Depp','Harrison.Ford','Denzel.Washington',	'Morgan.Freeman',	'Robert.De.Niro',	'Bruce.Willis',	'Meryl.Streep',	'Robert.Downey.Jr.',	'Tom.Cruise','net.revenue','ratio','ratio_indicator')) 
 
 melt_train = melt_train[melt_train$value ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
@@ -64,12 +63,21 @@ names(melt_train)[31] = "studio" # rename 31st col studio
 studio_vector_train <-unclass(melt_train$studio)
 
 melt_train$studio_unclass <- studio_vector_train
+
+## test data
+melt_test <- melt(movie_test, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','Dwayne.Johnson','Samuel.L..Jackson','Tom.Hanks','Johnny.Depp','Harrison.Ford','Denzel.Washington',	'Morgan.Freeman',	'Robert.De.Niro',	'Bruce.Willis',	'Meryl.Streep',	'Robert.Downey.Jr.',	'Tom.Cruise','net.revenue','ratio','ratio_indicator')) 
+
+melt_test = melt_test[melt_test$value ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
+names(melt_test)[31] = "studio" # rename 31st col studio
+
+studio_vector_test <-unclass(melt_test$studio)
+
+melt_test$studio_unclass <- studio_vector_test
 ```
 
 ```{r}
 ## Turn actor into numerical attribute, get one column 
 
-# studios into numerical attribute, melt_test is the new testing data
 melt_train2 <- melt(melt_train, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','net.revenue','ratio','ratio_indicator','studio','value','studio_unclass')) 
 
 names(melt_train2)[23] = "value2" # rename 23nd col studio
@@ -80,12 +88,23 @@ names(melt_train2)[22] = "actor" # rename 22nd col studio
 actor_vector_train <-unclass(melt_train2$actor)
 
 melt_train2$actor_unclass <- actor_vector_train
+
+## test data
+melt_test2 <- melt(melt_test, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','Action','Comedy','Drama','Romance','Thriller','net.revenue','ratio','ratio_indicator','studio','value','studio_unclass')) 
+
+names(melt_test2)[23] = "value2" # rename 23nd col studio
+
+melt_test2 = melt_test2[melt_test2$value2 ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
+names(melt_test2)[22] = "actor" # rename 22nd col studio
+
+actor_vector_test <-unclass(melt_test2$actor)
+
+melt_test2$actor_unclass <- actor_vector_test
 ```
 
 ```{r}
 ## Turn genre into numerical attribute, get one column 
 
-# studios into numerical attribute, melt_test is the new testing data
 melt_train3 <- melt(melt_train2, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','net.revenue','ratio','ratio_indicator','studio','value','studio_unclass','actor','value2','actor_unclass')) 
 
 names(melt_train3)[21] = "value3" # rename 21th col studio
@@ -96,12 +115,23 @@ names(melt_train3)[20] = "genre" # rename 20nd col studio
 genre_vector_train <-unclass(melt_train3$genre)
 
 melt_train3$genre_unclass <- genre_vector_train
+
+## test data
+melt_test3 <- melt(melt_test2, id = c('budget','revenue','runtime','vote_average','vote_count','en','hu','fr','ru','es','net.revenue','ratio','ratio_indicator','studio','value','studio_unclass','actor','value2','actor_unclass')) 
+
+names(melt_test3)[21] = "value3" # rename 21th col studio
+
+melt_test3 = melt_test3[melt_test3$value3 ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
+names(melt_test3)[20] = "genre" # rename 20nd col studio
+
+genre_vector_test <-unclass(melt_test3$genre)
+
+melt_test3$genre_unclass <- genre_vector_test
 ```
 
 ```{r}
 ## Turn languange into numerical attribute, get one column 
 
-# studios into numerical attribute, melt_test is the new testing data
 melt_train4 <- melt(melt_train3, id = c('budget','revenue','runtime','vote_average','vote_count','net.revenue','ratio','ratio_indicator','studio','value','studio_unclass','actor','value2','actor_unclass','genre','value3','genre_unclass')) 
 
 names(melt_train4)[19] = "value4" # rename 19th col studio
@@ -112,16 +142,35 @@ names(melt_train4)[18] = "languange" # rename 18nd col studio
 languange_vector_train <-unclass(melt_train4$languange)
 
 melt_train4$languange_unclass <- languange_vector_train
+
+## test data
+melt_test4 <- melt(melt_test3, id = c('budget','revenue','runtime','vote_average','vote_count','net.revenue','ratio','ratio_indicator','studio','value','studio_unclass','actor','value2','actor_unclass','genre','value3','genre_unclass')) 
+
+names(melt_test4)[19] = "value4" # rename 19th col studio
+
+melt_test4 = melt_test4[melt_test4$value4 ==TRUE, ] # takes out duplicates by getting rid of all the FALSE values
+names(melt_test4)[18] = "languange" # rename 18nd col studio
+
+languange_vector_test <-unclass(melt_test4$languange)
+
+melt_test4$languange_unclass <- languange_vector_test
 ```
 
 ```{r}
+## train
 svm_data1 <- subset(melt_train4, select = -c(value, value2, value3, value4))
 svm_data2 <- subset(melt_train4, select = -c(studio, value, actor, value2, genre, value3, languange, value4))
+## test
+svm_data3 <- subset(melt_test4, select = -c(value, value2, value3, value4))
+svm_data4 <- subset(melt_test4, select = -c(studio, value, actor, value2, genre, value3, languange, value4))
 ```
 
 
 ```{r}
-data <- write_excel_csv(svm_data1, "svm_data_labeled.csv")
-data <- write_excel_csv(svm_data2, "svm_data.csv")
+data <- write_excel_csv(svm_data1, "svm_traindata_labeled.csv")
+data <- write_excel_csv(svm_data2, "svm_traindata.csv")
+
+data <- write_excel_csv(svm_data1, "svm_testdata_labeled.csv")
+data <- write_excel_csv(svm_data2, "svm_testdata.csv")
 ```
 
