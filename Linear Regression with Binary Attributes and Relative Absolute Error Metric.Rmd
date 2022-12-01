@@ -1,0 +1,78 @@
+---
+title: "Linear Regression - Binary Attributes and Relative Absolute Error"
+author: "Chase Pheifer"
+date: '`r Sys.Date()`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(readr)
+library(knitr)
+library(kableExtra)
+library(caret)
+library(klaR)
+library(dplyr)
+library(Metrics)
+
+```
+
+```{r read file in}
+#references:
+# https://stackoverflow.com/questions/24159761/r-read-csv-with-row-and-column-name
+
+movie_train <- read.csv('movie_train.csv', header = TRUE)
+```
+
+```{r make custom metric - relative absolute error}
+# create custom metric function to include relative absolute error for our linear model in the k-fold cv
+relative_error <- function(data,lev=NULL,model=NULL){
+    out <- c(caret::postResample(data$pred,data$obs),rae(actual=data$obs,predicted=data$pred))
+    names(out) <- c("RMSE","Rsquared","MAE","RAE")
+    out
+  }
+```
+
+
+```{r k-fold}
+set.seed(500)
+# Run k-fold cross-validation on the linear model with desired predictors and response in order to determine the models error
+
+# Run k-fold cross-validation to build model and get its error
+ctrl <- trainControl(method = "cv", number = 5, summaryFunction = relative_error)
+
+# net revenue as response
+model_nr_brDJM <- train((revenue - budget) ~ budget + runtime + Dwayne.Johnson + Marvel, data = movie_train, method = 'lm', trControl = ctrl, metric = 'RMSE', maximize = FALSE) # budget, runtime, Dwayne.Johnson, and Marvel as predictors
+
+print(model_nr_brDJM)
+
+lm_nr_brDJM <- model_nr_brDJM$finalModel # grab model from k-fold cv
+
+# lm <- lm((revenue - budget) ~ budget + runtime + Dwayne.Johnson + Marvel, data = movie_train) # just an example
+```
+
+```{r model evaluation}
+# summary(linear_model)
+# plot(linear_model)
+```
+
+```{r plot model vs. original data}
+# plot net revenue vs. budget with linear model plotted as well
+plot(movie_train$budget, (movie_train$revenue - movie_train$budget), col='red', xlab='Movie Budget in $',ylab='Net Movie Revenue in $')
+abline(lm_nr_brDJM)
+```
+
+```{r use model to predict values}
+# new_budgets <- expand.grid(budget=c(5*10^3,5*10^4,5*10^5,5*10^6,5*10^7,5*10^8),runtime=c(10,500))
+# data.frame(predict(linear_model, newdata = new_budgets))
+```
+
+```{r Grid Search CV}
+#references:
+#https://www.r-bloggers.com/2020/04/grid-search-cross-validation-using-crossval/
+
+# possibly follow the above references to determine ideal polynomial model
+
+```
