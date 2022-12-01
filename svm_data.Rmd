@@ -174,3 +174,23 @@ data <- write_excel_csv(svm_data1, "svm_testdata_labeled.csv")
 data <- write_excel_csv(svm_data2, "svm_testdata.csv")
 ```
 
+```{r}
+# create correlation matrix to decide what attribute best to use with budget
+contAttrib <- svm_data2
+contAttrib_numer <- data.matrix(contAttrib)
+
+# computing correlation matrix
+cor_data = cor(contAttrib_numer)
+ 
+print("Correlation matrix")
+print(cor_data)
+```
+** notes: 
+Assuming linear correlation:
+- NA on langunage since all the movies are in english
+- Things that have most correlation with net.revenue:
+  > Budget with a correlation of 0.67
+  > Production company with a correlation of 0.18
+  > Genre with a correlation of 0.15
+All other attributes have a magnitude correlation <= 0.07 with net revenue
+
