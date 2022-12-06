@@ -19,32 +19,33 @@ library(dplyr)
 ```
 
 ```{r read file in}
-# # references
-# # https://www.geeksforgeeks.org/how-to-remove-duplicate-rows-in-r-dataframe/
-# # https://datatofish.com/export-dataframe-to-csv-in-r/
-# 
-# movies_filtered <- distinct(read_csv('movies_filtered_duprows.csv',trim_ws=TRUE,  show_col_types = FALSE))
+# references
+# https://www.geeksforgeeks.org/how-to-remove-duplicate-rows-in-r-dataframe/
+# https://datatofish.com/export-dataframe-to-csv-in-r/
+
+# movies_filtered <- distinct(read_csv('movies_filtered_duprows.csv', trim_ws=TRUE,  show_col_types = FALSE))
 # 
 # write.csv(movies_filtered,file ='movies_filtered.csv', row.names = FALSE)
 ```
 
 ```{r remove bad revenue and budget rows}
-# movies_filtered <- read.csv('movies_filtered_adjInfl.csv', header=TRUE)
-# 
-# plot(movies_filtered$budget, (movies_filtered$revenue / movies_filtered$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
-# max(movies_filtered$revenue/movies_filtered$budget)
-# min(movies_filtered$revenue/movies_filtered$budget)
-# 
-# # Best way to remove strange revenue or budget rows is removing rows based on ratio of revenue to budget. A very small ratio likely means a huge budget with unrealistically small revenue and a large ratio means a huge revenue with an unrealistically small budget. The following removes the rows with the top and bottom half percent of revenue/budget ratio within the dataset:
-# movies_filtered_clean_revenue_and_budget <- filter(movies_filtered, revenue/budget<max(quantile(revenue/budget,0.995))
-#                            & revenue/budget>min(quantile(revenue/budget,0.005))) # only removes 1% of the dataset but makes the data much cleaner.
-# max(movies_filtered_clean_revenue_and_budget$revenue/movies_filtered1$budget)
-# min(movies_filtered_clean_revenue_and_budget$revenue/movies_filtered1$budget)
-# 
-# plot(movies_filtered_clean_revenue_and_budget$budget, (movies_filtered_clean_revenue_and_budget$revenue / movies_filtered_clean_revenue_and_budget$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
+movies_filtered <- read.csv('movies_filtered_adjInfl_2.csv', header=TRUE)
+
+plot(movies_filtered$budget, (movies_filtered$revenue / movies_filtered$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
+max(movies_filtered$revenue/movies_filtered$budget)
+min(movies_filtered$revenue/movies_filtered$budget)
+
+# Best way to remove strange revenue or budget rows is removing rows based on ratio of revenue to budget. A very small ratio likely means a huge budget with unrealistically small revenue and a large ratio means a huge revenue with an unrealistically small budget. The following removes the rows with the top and bottom half percent of revenue/budget ratio within the dataset:
+movies_filtered_clean_revenue_and_budget <- filter(movies_filtered, revenue/budget<max(quantile(revenue/budget,0.995))
+                           & revenue/budget>min(quantile(revenue/budget,0.005))) # only removes 1% of the dataset but makes the data much cleaner.
+max(movies_filtered_clean_revenue_and_budget$revenue/movies_filtered_clean_revenue_and_budget$budget)
+min(movies_filtered_clean_revenue_and_budget$revenue/movies_filtered_clean_revenue_and_budget$budget)
+
+plot(movies_filtered_clean_revenue_and_budget$budget, (movies_filtered_clean_revenue_and_budget$revenue / movies_filtered_clean_revenue_and_budget$budget), col='red', xlab='Movie Budget',ylab='Ratio of Revenue to Budget')
 ```
+
 ```{r write cleaned up revenue and budget file}
-# write.csv(movies_filtered_clean_revenue_and_budget,file ='movies_filtered_clean_revenue_and_budget.csv', row.names = FALSE)
+write.csv(movies_filtered_clean_revenue_and_budget,file ='movies_filtered_clean_revenue_and_budget.csv', row.names = FALSE)
 ```
 
 ```{r}

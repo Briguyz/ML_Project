@@ -1,7 +1,7 @@
 ---
 title: "adjustforinflation"
-author: "Kyra Hendrickson"
-date: "2022-11-4"
+author: "Kyra and Chase"
+date: "2022-12-6"
 output: html_document
 ---
 
@@ -23,83 +23,63 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Imports (didnt use all of these just copy and pasted imports from another file)
 ```{r}
-library(tidyverse)
+library(priceR)
 library(readr)
-library(knitr)
-library(kableExtra)
-library(caret)
-library(klaR)
+library(blscrapeR)
 ```
 
 --
 Download data
 --
 ```{r}
-movies_filtered <- read_csv('movies_filtered.csv', col_names =c('title','genres','original_language','production_companies','release_date','budget','revenue','vote_average','vote_count','credits'), trim_ws = TRUE, show_col_types = FALSE)
+movies_filtered <- read_csv('movies_filtered.csv', trim_ws = TRUE, show_col_types = FALSE, col_names = TRUE)
 
-movies_filtered <- movies_filtered[-c(1), ]
+# movies_filtered <- movies_filtered[c(-1),]
 ```
 
 ```{r}
-data <- write_excel_csv(movies_filtered, "pleasework.csv")
+# get budget and revenue vector
+budget <- as.vector(as.numeric(unlist(movies_filtered$budget)))
+revenue <- as.vector(as.numeric(unlist(movies_filtered$revenue)))
+fromdates <- as.vector(as.numeric(unlist(movies_filtered$release_year)))
+todate = 2021
 ```
 
-
-
-```{r}
-if(!require('PriceR')){
-  install.packages('priceR')
-  library('priceR')
-}
-```
+For loop only works starting at 2020 movies. It draws from inflation data that goes up to 2021. T
+First instance of 2020 is at row 249
 
 ```{r}
 # set country
 country <- "US"
 inflation_dataframe <- retrieve_inflation_data(country)
 countries_dataframe <- show_countries() 
-
-# get budget and revenue vector
-budget <- as.numeric(unlist(movies_filtered[6]))
-revenue <- as.numeric(unlist(movies_filtered[7]))
-fromdates <- as.numeric(unlist(movies_filtered[5]))
-todate = 2021
 ```
 
-For loop only works starting at 2020 movies. It draws from inflation data that goes up to 2021. T
-Movies are in yearly order from newest to oldest and the first instance of 2020 is on index 221. 
-Start here and just bind what you got to budget[1:220,] and revenue[1:220]
-
 ```{r}
-## budgets starting with index 221. 
-
-adjusted_budget <- vector(mode="numeric")
-for (i in 221:8852){
+adjusted_budget <- vector(mode="numeric",length=(nrow(movies_filtered)-248))
+for (i in 249:nrow(movies_filtered)){
   new_prices <- adjust_for_inflation(budget[i], fromdates[i], country, todate,
     inflation_dataframe = inflation_dataframe,
     countries_dataframe = countries_dataframe)
-  adjusted_budget <- append(adjusted_budget, new_prices)
+  adjusted_budget[i-248] <- new_prices
 }
 
 # new budget vector
-new_budget <- as.character(append(budget[1:220],adjusted_budget))
+new_budget <- append(budget[1:248],adjusted_budget)
 ```
 
 ```{r}
-## revenue starting with index 221 (Movie: Soul). On Movies filtered, Soul is index 220. 
-
-adjusted_revenue <- vector(mode="numeric")
-for (i in 221:8852){
+adjusted_revenue <- vector(mode="numeric",length=(nrow(movies_filtered)-248))
+for (i in 249:nrow(movies_filtered)){
   new_prices <- adjust_for_inflation(revenue[i], fromdates[i], country, todate,
     inflation_dataframe = inflation_dataframe,
     countries_dataframe = countries_dataframe)
-  adjusted_revenue <- append(adjusted_revenue, new_prices)
+  adjusted_revenue[i-248] <- new_prices
 }
 
 # new revenue vector
-new_revenue <- as.character(append(revenue[1:220],adjusted_revenue))
+new_revenue <- append(revenue[1:248],adjusted_revenue)
 ```
-
 
 ```{r}
 ## update movies_filtered and save as movies_filtered_inflAdj
@@ -107,15 +87,9 @@ movies_filtered$budget <- new_budget
 movies_filtered$revenue <- new_revenue 
 ```
 
-```{r}
-whatnow <- movies_filtered$budget
-whatnow2 <- movies_filtered$revenue
-whatnow3 <- movies_filtered$vote_average
-```
-
 
 ```{r}
-data <- write_excel_csv(movies_filtered, "movies_filtered_adjInfl.csv")
+write.csv(movies_filtered,file ='movies_filtered_adjInfl_2.csv', row.names = FALSE)
 ```
 
 

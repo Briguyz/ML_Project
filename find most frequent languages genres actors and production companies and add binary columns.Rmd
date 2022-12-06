@@ -13,12 +13,17 @@ library(stringr)
 library(tidyr)
 ```
 
+```{r load data}
+movies_df <- read.csv('movies_filtered_clean_revenue_and_budget.csv', header=TRUE)
+```
+
 ```{r find top 5 frequent languages}
 # reference:
 # https://www.statology.org/plot-categorical-data-in-r/
-movies_df <- read.csv('movies_filtered_clean_revenue_and_budget.csv', header=TRUE)
 
+ggplot(movies_df,aes(x=original_language)) + geom_bar()
 ```
+
 Top languages 5 are: en, hi, fr, ru, es.
 ```{r add binary column to data set for each language}
 # reference:
@@ -41,7 +46,7 @@ for (i in 1:length(genre_list)){
   print(paste0('Count for ',genre_list[i],' is ',sum(str_count(movies_df$genres,genre_list[i]))))
 }
 ```
-Top count of genres are action (2228), comedy (3098), drama (4203), romance (1655), and thriller (2112). 
+Top count of genres are action (2230), comedy (3104), drama (4207), romance (1662), and thriller (2114). 
 ```{r add binary column to data set for each genre}
 movies_df$Action <- str_detect(movies_df$genres,'Action')
 movies_df$Comedy <- str_detect(movies_df$genres,'Comedy')
@@ -60,7 +65,7 @@ for (i in 1:length(actor_list)){
   print(paste0('Count for ',actor_list[i],' is ',sum(str_count(movies_df$credits,actor_list[i]))))
 }
 ```
-Top 12 count of actors are Dwayne Johnson (45), Samuel L. Jackson (96), Tom Hanks (52), Johnny Depp (50), Harrison Ford (50), Denzel Washington (45), Morgan Freeman (63), Robert De Niro (72), Bruce Willis (76), Meryl Streep (50), Robert Downey Jr. (44), and Tom Cruise (44).
+Top 12 count of actors are Dwayne Johnson (44), Samuel L. Jackson (95), Tom Hanks (52), Johnny Depp (51), Harrison Ford (49), Denzel Washington (45), Morgan Freeman (64), Robert De Niro (72), Bruce Willis (76), Meryl Streep (50), Robert Downey Jr. (44), and Tom Cruise (44).
 ```{r add binary column to data set for each genre}
 movies_df$`Dwayne Johnson` <- str_detect(movies_df$credits,'Dwayne Johnson')
 movies_df$`Samuel L. Jackson` <- str_detect(movies_df$credits,'Samuel L. Jackson')
@@ -84,7 +89,7 @@ for (i in 1:length(production_company_list)){
   print(paste0('Count for ',production_company_list[i],' is ',sum(str_count(movies_df$production_companies,production_company_list[i]))))
 }
 ```
-Top 5 count of production companies are Warner Bros (643), Universal (581), 20th Century Fox (452), Paramount (465), and Columbia (435), plus Pixar (27), Marvel (51), and Walt Disney (263) for curiosity's sake. 
+Top 5 count of production companies are Warner Bros (644), Universal (585), 20th Century Fox (453), Paramount (468), and Columbia (439), plus Pixar (27), Marvel (51), and Walt Disney (264) for curiosity's sake. 
 ```{r add binary column to data set for each genre}
 movies_df$`Warner Bros` <- str_detect(movies_df$production_companies,'Warner Bros')
 movies_df$Universal <- str_detect(movies_df$production_companies,'Universal')
@@ -100,7 +105,7 @@ movies_df$`Walt Disney` <- str_detect(movies_df$production_companies,'Walt Disne
 # reference:
 # https://www.tutorialspoint.com/how-to-remove-a-column-from-an-r-data-frame
 
-movies_df <- subset(movies_df,select=-c(genres,original_language,credits,production_companies,title))
+movies_df <- subset(movies_df,select=-c(genres,original_language,credits,production_companies,title,release_year))
 ```
 
 ```{r save file}
