@@ -1,0 +1,340 @@
+---
+title: "Regression Tree and SVM Model"
+author: "Brian"
+date: "2022-11-22"
+output: html_document
+---
+
+## Including Libraries
+```{r, include=FALSE}
+library(tidyverse)
+library(readr)
+library(caret)
+library(ggplot2)
+library(dplyr)
+library(e1071)
+library(tidyr)
+library(knitr)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(arules)
+library(Metrics)
+
+```
+
+# Importing Data
+```{r}
+# Download Test and Training data
+set.seed(1)
+movie_test <- read_csv('movie_test.csv', trim_ws = TRUE)
+movie_train <- read_csv('movie_train.csv', trim_ws = TRUE)
+movie_dataset <- read_csv('movies_train_test.csv', trim_ws = TRUE)
+```
+
+# Budget Preprocessing and Set Up
+```{r, echo = True}
+#Plot graphs of 
+ggplot(movie_train, aes(budget)) + geom_histogram()
+
+
+#Discretize the Budget for classification into equal frequency after trimming
+#Breaks into 3 parts:
+#Low_Budget = 1 Dollar - 8.85 Million
+#Middle_Budget = 8.85 Million - 35 Million
+#High_Budget = 35 Million - 800 Million
+disc.budget <- discretizeDF(movie_train, methods = list(
+  budget = list(method = "frequency", breaks = 3,
+    labels = c("Low_Budget", "Middle_Budget", "High_Budget"))
+  ),
+  default = list(method = "none")
+  )
+
+
+#Create tables for different models removing response variables
+model_movie_train <- subset(movie_train, 
+                            select = -c(revenue, vote_average, vote_count))
+model_movie_test <- subset(movie_test, 
+                           select = -c(revenue, vote_average, vote_count))
+
+
+
+```
+
+
+
+# Net Revenue Preprocessing and Set Up
+```{r}
+#Check Revenue
+ggplot(movie_train, aes(revenue)) + geom_histogram()
+
+#Discretize the Revenue for classification into equal frequency after trimming
+#Breaks into 3 parts:
+#Low_Revenue = 1 Dollar -  11 Million
+#Middle_Revenue = 11 Million - 74.2 Million
+#High_Revenue = 74.2 Million - 3.69 Billion
+disc.revenue <- discretizeDF(movie_train, methods = list(
+  revenue = list(method = "frequency", breaks = 3,
+    labels = c("Low_Revenue", "Middle_Revenue", "High_Revenue"))
+  ),
+  default = list(method = "none")
+  )
+
+
+#Discretize the Revenue for classification with discretized Budget
+disc.revenue.budget <- discretizeDF(disc.budget, methods = list(
+  revenue = list(method = "frequency", breaks = 3,
+    labels = c("Low_Revenue", "Middle_Revenue", "High_Revenue"))
+  ),
+  default = list(method = "none")
+  )
+
+summary(disc.revenue)
+```
+
+# Training Data on Revenue
+```{r}
+
+#Create tables for different models
+Revenue.model_movie_train <- subset(movie_train, 
+                            select = -c(vote_average, vote_count))
+dis.Revenue.Budget.model_movie_train <- subset(disc.budget, 
+                            select = -c(vote_average, vote_count))
+dis.Revenue.model_movie_train <- subset(movie_train, 
+                            select = -c(vote_average, vote_count))
+#Revenue
+r1 <- rpart(
+  formula = revenue ~.,
+  data    = Revenue.model_movie_train,
+  )
+r1
+fancyRpartPlot(r1, main = "Revenue")
+
+#Discretized Revenue and Discretized Budget
+r2 <- rpart(
+  formula = revenue ~.,
+  data    = dis.Revenue.Budget.model_movie_train,
+  )
+r2
+fancyRpartPlot(r2, main = "Discretized Revenue and Discretized Budget")
+
+#Discretized Revenue
+r3 <- rpart(
+  formula = revenue ~.,
+  data    = dis.Revenue.model_movie_train,
+  )
+r3
+fancyRpartPlot(r3, main = "Discretized Revenue")
+
+```
+
+# Testing Revenue model on Test Data 
+```{r}
+#Display the results
+printcp(r1)
+printcp(r2)
+printcp(r3)
+
+#Visualize cross-validation results
+plotcp(r1)
+plotcp(r2)
+plotcp(r3)
+
+#Summary of models:
+#If no value comes from model, no impact towards the outcome. write in report
+#Don't use profit as predictor
+
+#Prune trees
+pr1 <- prune(r1, cp = 0.068874) 
+pr2 <- prune(r1, cp = 0.015923)
+
+
+#Plot Pruned Tree
+
+#UnDiscretized Revenue:
+fancyRpartPlot(pr1, 
+               main = "REVENUE TREE", 
+               sub = "cp = 0.069")
+fancyRpartPlot(pr2, 
+               main = "REVENUE TREE",
+               sub = "cp = 0.016")
+
+train.pred.r1 <- predict(pr1, movie_train)
+train.pred.r2 <- predict(pr2, movie_train)
+
+
+#Accuracy test on Training data
+#Model 2 has the best Mean Absolute Error of 86913355 or ~87 Million
+MAE(movie_train$revenue, train.pred.r1)
+MAE(movie_train$revenue, train.pred.r2)
+
+
+#Model 2 has the best Root Mean Square Error of 175490608 or ~175 Million
+RMSE(movie_train$revenue, train.pred.r1)
+RMSE(movie_train$revenue, train.pred.r2)
+
+#Model 2 has the best Relative Absolute Error of 0.69
+rae(movie_train$revenue, train.pred.r1)
+rae(movie_train$revenue, train.pred.r2)
+
+#Testing both models on Test Data for Accuracy
+test.pred.r1 <- predict(pr1, movie_test)
+test.pred.r2 <- predict(pr2, movie_test)
+
+#Model 1 has the best Mean Absolute Error of 91106245 or ~ 91 Million
+MAE(movie_test$revenue, test.pred.r1)
+MAE(movie_test$revenue, test.pred.r2)
+
+#Model 1 has the best Root Mean Square Error of 195500915 or ~ 195 Million
+RMSE(movie_test$revenue, test.pred.r1)
+RMSE(movie_test$revenue, test.pred.r2)
+
+#Model 1 has the best Relative Absolute Error of 0.714
+rae(movie_test$revenue, test.pred.r1)
+rae(movie_test$revenue, test.pred.r2)
+
+#Testing both models on Actual Data for Accuracy
+pred.r1 <- predict(pr1, movie_dataset)
+pred.r2 <- predict(pr2, movie_dataset)
+
+#Model 2 has the best Mean Absolute Error of 87768817 or ~ 88 Million
+MAE(movie_dataset$revenue, pred.r1)
+MAE(movie_dataset$revenue, pred.r2)
+
+#Model 2 has the best Root Mean Square Error of 179978431 or ~ 180 Million
+RMSE(movie_dataset$revenue, pred.r1)
+RMSE(movie_dataset$revenue, pred.r2)
+
+#Model 2 has the best Relative Absolute Error of 0.69
+rae(movie_dataset$revenue, pred.r1)
+rae(movie_dataset$revenue, pred.r2)
+
+
+#Chose model 2
+```
+
+
+# Training Data on Net Revenue or Profit
+```{r}
+#Create tables for profit
+model_movie.profit <- movie_dataset
+model_movie.profit$profit <- (model_movie.profit$revenue - model_movie.profit$budget)
+
+model_movie_train.profit <- model_movie_train
+model_movie_train.profit$profit <- (movie_train$revenue - movie_train$budget)
+
+model_movie_test.profit <- model_movie_test
+model_movie_test.profit$profit <- (movie_test$revenue - movie_test$budget)
+
+
+disc.profit <- model_movie_train.profit
+# Set negative values to 0
+disc.profit[disc.profit$profit <= 0, "profit"] <- 0
+
+# Set positive values to 1
+disc.profit[disc.profit$profit >= 1, "profit"] <- 1
+
+#Discretize profit
+disc.profit$profit <- factor(disc.profit$profit, 
+                                         levels = 0:1,
+                                         labels = c("No.Profit", "Profit"))
+
+#Profit or Net Revenue
+p1 <- rpart(
+  formula = profit ~.,
+  data    = model_movie_train.profit
+  )
+p1
+fancyRpartPlot(p1, main = "Profit, Regression")
+
+p2 <- rpart(
+  formula = profit ~.,
+  data    = disc.profit,
+  )
+p2
+#fancyRpartPlot(p2, main = "Profit, Classification")
+#Model 2, No significance
+
+```
+
+# Testing Net Revenue or Profit model on Test Data 
+```{r}
+#Display the results
+printcp(p1)
+
+#Visualize cross-validation results
+plotcp(p1)
+
+#Summary of models:
+#If no value comes from model, no impact towards the outcome. write in report
+#Don't use profit as predictor
+
+#Prune trees
+pp1 <- prune(p1, cp = 0.034793) 
+pp2 <- prune(p1, cp = 0.025976) 
+
+
+#Plot Pruned Tree
+fancyRpartPlot(pp1, 
+               main = "NET REVENUE",
+               sub = "cp = 0.035")
+fancyRpartPlot(pp2, 
+               main = "NET REVENUE",
+               sub = "cp = 0.026")
+
+
+train.pred.p1 <- predict(pp1, model_movie_train.profit)
+train.pred.p2 <- predict(pp2, model_movie_train.profit)
+
+#Accuracy test on Training data
+#Model 2 has the best Mean Absolute Error of 81397147 or ~ 81 Million
+MAE(model_movie_train.profit$profit, train.pred.p1)
+MAE(model_movie_train.profit$profit, train.pred.p2)
+
+#Model 2 has the best Root Mean Square Error of 168795941 or ~ 169 Million
+RMSE(model_movie_train.profit$profit, train.pred.p1)
+RMSE(model_movie_train.profit$profit, train.pred.p2)
+
+#Model 2 has the best Relative Absolute Error of 0.78
+rae(model_movie_train.profit$profit, train.pred.p1)
+rae(model_movie_train.profit$profit, train.pred.p2)
+
+#Test Data
+test.pred.p1 <- predict(pp1, model_movie_test.profit)
+test.pred.p2 <- predict(pp2, model_movie_test.profit)
+
+#Accuracy test on Training data
+#Model 2 has the best Mean Absolute Error of 84910533 or ~ 85 Million
+MAE(model_movie_test.profit$profit, test.pred.p1)
+MAE(model_movie_test.profit$profit, test.pred.p2)
+
+#Model 2 has the best Root Mean Square Error of 190526914 or ~ 190 Million
+RMSE(model_movie_test.profit$profit, test.pred.p1)
+RMSE(model_movie_test.profit$profit, test.pred.p2)
+
+#Model 2 has the best Relative Absolute Error of 0.79
+rae(model_movie_test.profit$profit, test.pred.p1)
+rae(model_movie_test.profit$profit, test.pred.p2)
+
+#Actual Data
+pred.p1 <- predict(pp1, model_movie.profit)
+pred.p2 <- predict(pp2, model_movie.profit)
+
+#Accuracy test on Training data
+#Model 2 has the best Mean Absolute Error of 82099263 or ~ 82 Million
+MAE(model_movie.profit$profit, pred.p1)
+MAE(model_movie.profit$profit, pred.p2)
+
+#Model 2 has the best Root Mean Square Error of 173356595 or ~ 173 Million
+RMSE(model_movie.profit$profit, pred.p1)
+RMSE(model_movie.profit$profit, pred.p2)
+
+#Model 2 has the best Relative Absolute Error of 0.78
+rae(model_movie.profit$profit, pred.p1)
+rae(model_movie.profit$profit, pred.p2)
+
+#Use Model 2
+fancyRpartPlot(pp2, 
+               main = "NET REVENUE",
+               sub = "")
+```
